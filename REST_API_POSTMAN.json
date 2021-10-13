@@ -1,0 +1,123 @@
+{
+	"info": {
+		"_postman_id": "7bec5899-20b8-416b-9b33-325212b68c81",
+		"name": "Rest Api Services Portal",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Membuat Portal Services",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"Data\" :{\n    \"userid\": \"936ddf91-edc3-4058-81dd-be6235f0b9b6\",\n    \"nama\": \"Gempa\",\n    \"deskripsi\": \"Gempa Api Services\",\n    \"status\" : 1\n   } \n}"
+				},
+				"url": {
+					"raw": "localhost:4000/api/users/sercreate",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"api",
+						"users",
+						"sercreate"
+					]
+				},
+				"description": "Membuat Portal Services"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Portal Services",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "localhost:4000/api/users/getservice/56acf5db-9f9c-449e-9388-de0b64ffad24",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"api",
+						"users",
+						"getservice",
+						"56acf5db-9f9c-449e-9388-de0b64ffad24"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Portal Services",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"Data\" :{\n    \"nama\": \"covid19\",\n    \"deskripsi\": \"covid19 api services versi 3\",\n    \"status\" : 1\n   } \n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:4000/api/users/edit/56acf5db-9f9c-449e-9388-de0b64ffad24",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"api",
+						"users",
+						"edit",
+						"56acf5db-9f9c-449e-9388-de0b64ffad24"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Portal Services",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "localhost:4000/api/users/delete/2/56acf5db-9f9c-449e-9388-de0b64ffad24",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"api",
+						"users",
+						"delete",
+						"2",
+						"56acf5db-9f9c-449e-9388-de0b64ffad24"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
