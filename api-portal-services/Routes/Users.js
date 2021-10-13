@@ -71,32 +71,32 @@ const storage = multer.diskStorage({
 
 function SelectOrCreateTable() {
 
-    // con.query('SELECT * FROM services', function (err, result, fields) {
-    //     if (err) {
-    //         const sql = 'CREATE TABLE services (id INT AUTO_INCREMENT PRIMARY KEY,nama VARCHAR(255), deskripsi VARCHAR(255), status BOOLEAN, userid  VARCHAR(255) Not Null UNIQUE) ) ';
-    //         con.query(sql, function (err, result) {
-    //             if (err) throw err;
-    //         });
-    //     }
-    // })
+    con.query('SELECT * FROM services', function (err, result, fields) {
+        if (err) {
+            const sql = 'CREATE TABLE services (id INT AUTO_INCREMENT PRIMARY KEY,nama VARCHAR(255), deskripsi VARCHAR(255), status BOOLEAN, userid VARCHAR(255) ) ';
+            con.query(sql, function (err, result) {
+                if (err) throw err;
+            });
+        }
+    })
 
-    // con.query('SELECT * FROM users', function (err, result, fields) {
-    //     if (err) {
-    //         const sql = 'CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY,nama VARCHAR(255), password  VARCHAR(255), pic  VARCHAR(255), email  VARCHAR(255) Not Null UNIQUE, alamat VARCHAR(255), userid VARCHAR(255) ) ';
-    //         con.query(sql, function (err, result) {
-    //             if (err) throw err;
-    //         });
-    //     }
-    // })
+    con.query('SELECT * FROM users', function (err, result, fields) {
+        if (err) {
+            const sql = 'CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY,nama VARCHAR(255), password  VARCHAR(255), pic  VARCHAR(255), email  VARCHAR(255) Not Null UNIQUE, alamat VARCHAR(255), userid VARCHAR(255) ) ';
+            con.query(sql, function (err, result) {
+                if (err) throw err;
+            });
+        }
+    })
 
-    // con.query('SELECT * FROM berita', function (err, result, fields) {
-    //     if (err) {
-    //         const sql = 'CREATE TABLE berita (id INT AUTO_INCREMENT PRIMARY KEY, judul  VARCHAR(150), konten VARCHAR(1000), userid VARCHAR(255) ) ';
-    //         con.query(sql, function (err, result) {
-    //             if (err) throw err;
-    //         });
-    //     }
-    // })
+    con.query('SELECT * FROM berita', function (err, result, fields) {
+        if (err) {
+            const sql = 'CREATE TABLE berita (id INT AUTO_INCREMENT PRIMARY KEY, judul  VARCHAR(150), konten VARCHAR(1000), userid VARCHAR(255) ) ';
+            con.query(sql, function (err, result) {
+                if (err) throw err;
+            });
+        }
+    })
 }
 
 SelectOrCreateTable();
@@ -275,6 +275,7 @@ router.get('/getservice', async (req, res) => {
     con.query(theSQL, function (err, result) {
         if (err) throw err;
         res.status(200).send({ result });
+        res.json({data : result});
     })
 
 })
