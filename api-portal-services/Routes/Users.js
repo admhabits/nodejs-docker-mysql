@@ -156,7 +156,7 @@ router.post('/sercreate', async (req, res) => {
                     console.log(result)
                 })
             } else {
-                return res.status(201).send({ message: 'Tidak ditemukan !' })
+                return res.status(201).send({ message: 'Akses ditolak !' })
             }
         })
 })
@@ -186,7 +186,7 @@ router.post('/newscreate', async (req, res) => {
                     console.log(result)
                 })
             } else {
-                return res.status(201).send({ message: 'Tidak ditemukan !' })
+                return res.status(201).send({ message: 'Kamu tidak memiliki akses !' })
             }
         })
 })
@@ -225,7 +225,6 @@ router.get('/getservice/:userid', async (req, res) => {
 
     var decoded = jwt.decode(Token, { complete: true });
     const UserE = decoded.payload.UserEmail;
-
 
     const theSQL = `SELECT * FROM users WHERE email = '${UserE}'`;
     con.query(theSQL, function (err, result) {
@@ -269,15 +268,13 @@ router.get('/GetUserData', async (req, res) => {
 
 })
 
-router.get('/getservice', async (req, res) => {
-    const theSQL = `Select * FROM services`;
-
+router.get('/getservices', async (req, res) => {
+    const theSQL = `SELECT * FROM services WHERE id = '57ba647b-5d1a-442a-9ff2-fef022a34f6b'`;
     con.query(theSQL, function (err, result) {
         if (err) throw err;
         res.status(200).send({ result });
-        res.json({data : result});
-    })
-
+        // res.json({result});
+    });
 })
 
 

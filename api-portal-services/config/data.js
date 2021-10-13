@@ -5,3 +5,11 @@ module.exports = {
     DB_SECRET:process.env.DB_PASSWORD,
     PORT: process.env.DB_PORT,
 }
+
+// module.exports = {
+//     HOST: 'localhost',
+//     DB_NAME:'portal',
+//     USER_NAME:'root',
+//     DB_SECRET:'keren121224',
+//     PORT: 4000,
+// }
