@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: splp-backend-api
+  labels:
+    app: splp-backend-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: splp-backend-api
+  template:
+    spec:
+      containers:
+      - name: splp-backend-api
+        image: registry-splp.layanan.go.id/fajarali/api-portal-services:apis1
+        ports:
+        - containerPort: 4000
+      imagePullSecrets:
+        - name: internal-registry-secret
