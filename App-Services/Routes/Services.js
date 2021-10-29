@@ -40,7 +40,7 @@ con._protocol._delegateError = function (err, sequence) {
 
 
 
-// Select or Create the Users table & Services Table
+// Pilih atau Buat Tabel User & Services
 
 function SelectOrCreateTable() {
 
@@ -68,8 +68,7 @@ function extractToken(req) {
     return null;
 }
 
-// MIME TYPE FILE SETTINGS
-
+// Pengaturan Jenis Tipe Gambar
 const MIME_TYPE_MAP = {
     "application/vnd.curl.car": 'car'
 };
@@ -100,17 +99,140 @@ const upload = multer({
 });
 
 
-// Membuat Services 
+// UPDATE SERVICE BY ID
+router.post('/update/:id', upload.single("file"), async (req, res, next) => {
+    const Token = extractToken(req);
+    // console.log(Token);
+    var decoded = jwt.decode(Token, { complete: true });
+    console.log(decoded);
+
+   //GANTI METODE USER LOGIN
+   let email = decoded.payload.email;
+   if (!email) {
+       email = decoded.payload.username;
+   }
+
+    const URL = req.protocol + "://" + req.get("host");
+    const fileCar = URL + "/carfile/" + req.file.filename;
+
+    const nama = req.body.nama;
+    const deskripsi = req.body.deskripsi;
+    const id = req.params.id;
+
+    const status = 0;
+    const tanggal = new Date().toLocaleDateString().toString();
+
+    con.query(`SELECT userid FROM users WHERE email = '${email}' OR username = '${email}'`,
+        function (err, result) {
+            if (err) {
+                res.send({ err: 'err' });
+            }
+            if (result.length !== 0) {
+                //Panggil Update Services Function
+                UpdateService(result);
+            } else {
+                return res.status(204).send({ message: 'Access denied!' });
+            }
+        })
+
+    function UpdateService(rows) {
+        const result = Object.values(JSON.parse(JSON.stringify(rows)));
+        const userid = result[0].userid;
+        console.log("Get UserID in UPDATE Services : " + result[0].userid);
+
+        // Cari Services Berdasarkan User ID
+        const queryServices = `SELECT userid FROM services WHERE userid = '${userid}' AND id = ${id}`;
+
+        // Update Services Query
+        const updateServices = `UPDATE services SET nama_service = '${nama}', file_upload = '${fileCar}', deskripsi = '${deskripsi}', status = '${status}', tanggal = '${tanggal}' WHERE userid = '${userid}' AND id = '${id}'`;
+
+        con.query(queryServices, function (err, result) {
+            if (err) {
+                res.send({ error: 'Terjadi kesalahan!' })
+            }
+            if (result.length !== 0) {
+                // Jika ada maka update
+                // res.status(203).send({message: "Services telah dibuat !"})
+                con.query(updateServices, function (err, result) {
+                    if (err) { throw err; }
+                    res.status(200).send({ message: `Service updated with id ${id}!` })
+                })
+            } else {
+                res.status(404).send({ message: `Services tidak ditemukan dengan id ${id}!` })
+            }
+        })
+    }
+})
+
+
+// DELETE SERVICE BY ID
+router.post('/delete/:id', async (req, res, next) => {
+    const Token = extractToken(req);
+    var decoded = jwt.decode(Token, { complete: true });
+    console.log(decoded);
+
+    //GANTI METODE USER LOGIN
+    let email = decoded.payload.email;
+    if (!email) {
+        email = decoded.payload.username;
+    }
+
+    const id = req.params.id;
+
+    con.query(`SELECT userid FROM users WHERE email = '${email}' OR username = '${email}'`,
+        function (err, result) {
+            if (err) {
+                res.send({ err: 'err' });
+            }
+            if (result.length !== 0) {
+                //Panggil Update Services Function
+                HapusService(result);
+            } else {
+                return res.status(204).send({ message: 'Access denied!' });
+            }
+        })
+
+    function HapusService(rows) {
+        const result = Object.values(JSON.parse(JSON.stringify(rows)));
+        const userid = result[0].userid;
+        console.log("Get UserID in DELETE Services : " + result[0].userid);
+
+        // Cari Services Berdasarkan User ID
+        const queryServices = `SELECT userid FROM services WHERE userid = '${userid}' AND id = ${id}`;
+
+        // DELETE SERVICE QUERY
+        const updateServices = `DELETE FROM services WHERE userid = '${userid}' AND id = '${id}'`;
+
+        con.query(queryServices, function (err, result) {
+            if (err) {
+                res.send({ error: 'Terjadi kesalahan!' })
+            }
+            if (result.length !== 0) {
+                // Jika ada maka dihapus
+                con.query(updateServices, function (err, result) {
+                    if (err) { throw err; }
+                    res.status(200).send({ message: `Hapus service dengan id ${id}!` })
+                })
+            } else {
+                res.status(404).send({ message: `Service tidak ditemukan dengan id ${id}!` })
+            }
+        })
+    }
+})
+
+// CREATE SERVICES
 router.post('/create', upload.single("file"), async (req, res, next) => {
     const Token = extractToken(req);
     // console.log(Token);
     var decoded = jwt.decode(Token, { complete: true });
     console.log(decoded);
 
+    //GANTI METODE USER LOGIN
     let email = decoded.payload.email;
     if (!email) {
         email = decoded.payload.username;
     }
+
     const URL = req.protocol + "://" + req.get("host");
     const fileCar = URL + "/carfile/" + req.file.filename;
 
@@ -120,54 +242,35 @@ router.post('/create', upload.single("file"), async (req, res, next) => {
     const status = 0;
     const tanggal = new Date().toLocaleDateString().toString();
 
-    // console.log(email);
-    // return false;
     con.query(`SELECT userid FROM users WHERE email = '${email}' OR username = '${email}'`,
         function (err, result) {
             if (err) {
                 res.send({ err: 'err' });
             }
             if (result.length !== 0) {
-                // console.log(`${result.userid}`)
-                AddEditServices(result);
+                // Panggil BuatService Function
+                BuatService(result);
             } else {
                 return res.status(201).send({ message: 'Akses ditolak !' });
             }
         })
-    const id = req.params.id;
-    function AddEditServices(rows) {
+
+
+    function BuatService(rows) {
         const result = Object.values(JSON.parse(JSON.stringify(rows)));
         const userid = result[0].userid;
-        console.log(result[0].userid);
-        // Cari Services Berdasarkan User ID
-        const queryServices = `SELECT userid FROM services WHERE userid = '${userid}' AND id = ${id}`;
-        // Update Services Query
-        const updateServices = `UPDATE services SET nama_service = '${nama}', file_upload = '${fileCar}', deskripsi = '${deskripsi}', status = '${status}', tanggal = '${tanggal}' WHERE userid = '${userid}'`;
+        console.log("Get UserID in CREATE Services : " + result[0].userid);
+
         // Buat Services Query
         const buatServices = `INSERT INTO services (nama_service, file_upload, deskripsi, status, userid, tanggal) VALUES ('${nama}', '${fileCar}', '${deskripsi}', '${status}', '${userid}', '${tanggal}')`;
-
-        con.query(queryServices, function (err, result) {
-
-            if (err) {
-                res.send({ error: 'Services tidak ditemukan' })
-            }
-            if (result.length !== 0) {
-                // Jika ada maka update
-                con.query(updateServices, function (err, result) {
-                    if (err) { throw err; }
-                    res.status(200).send({ message: "Service Updated !" })
-                })
-            }
-
-            if (result.length === 0) {
-                // Jika tidak ada maka buat 
-                con.query(buatServices, function (err, result) {
-                    if (err) { throw err; }
-                    res.status(200).send({ message: "Service Created !" })
-                })
-            }
+        con.query(buatServices, function (err, result) {
+            if (err) { throw err; }
+            res.status(200).send({ message: "Service berhasil dibuat!" })
         })
     }
 })
+
+
+
 
 module.exports = router;
