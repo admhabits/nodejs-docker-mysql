@@ -134,13 +134,13 @@ router.post('/create', upload.single("file"), async (req, res, next) => {
                 return res.status(201).send({ message: 'Akses ditolak !' });
             }
         })
-
+    const id = req.params.id;
     function AddEditServices(rows) {
         const result = Object.values(JSON.parse(JSON.stringify(rows)));
         const userid = result[0].userid;
         console.log(result[0].userid);
         // Cari Services Berdasarkan User ID
-        const queryServices = `SELECT userid FROM services WHERE userid = '${userid}'`;
+        const queryServices = `SELECT userid FROM services WHERE userid = '${userid}' AND id = ${id}`;
         // Update Services Query
         const updateServices = `UPDATE services SET nama_service = '${nama}', file_upload = '${fileCar}', deskripsi = '${deskripsi}', status = '${status}', tanggal = '${tanggal}' WHERE userid = '${userid}'`;
         // Buat Services Query
