@@ -3,14 +3,13 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const router = express.Router();
+const md5 = require('md5');
 
 // config data 
 const DB_NAME = require('../config/data').DB_NAME;
 const HOST = require('../config/data').HOST;
 const DB_SECRET = require('../config/data').DB_SECRET;
 const USER_NAME = require('../config/data').USER_NAME;
-
-//end of
 
 
 // Connect To DB
@@ -39,23 +38,28 @@ con._protocol._delegateError = function (err, sequence) {
     return del.call(this, err, sequence);
 };
 
+function isEmpty(obj) {
+    for (var prop in obj) {
+        if (obj.hasOwnProperty(prop))
+            return false;
+    }
+    return JSON.stringify(obj) === JSON.stringify({});
+}
 
-// conde for imge uploaded / some settings..
-
+// MIME TYPE FILE SETTINGS
 
 const MIME_TYPE_MAP = {
-    "image/png": "png",
-    "image/jpeg": "jpg",
+    "image/png": 'png',
     "image/jpg": 'jpg',
-    "application/vnd.curl.car": 'car'
+    "image/jpeg": 'jpeg'
 };
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const isValid = MIME_TYPE_MAP[file.mimetype];
-        let error = new Error("Invalid mime type");
+        let error = new Error("Invalid Mime Type !");
         if (isValid) { error = null; }
-        cb(error, ".car files");
+        cb(error, " ektensi gambar !");
     }, filename: (req, file, cb) => {
         const name = file.originalname
             .toLowerCase()
@@ -71,378 +75,104 @@ const storage = multer.diskStorage({
 
 function SelectOrCreateTable() {
 
-    con.query('SELECT * FROM services', function (err, result, fields) {
-        if (err) {
-            const sql = 'CREATE TABLE services (id INT AUTO_INCREMENT PRIMARY KEY,nama VARCHAR(255), url VARCHAR(255),  deskripsi VARCHAR(255), status BOOLEAN, userid VARCHAR(255) ) ';
-            con.query(sql, function (err, result) {
-                if (err) throw err;
-            });
-        }
-    })
+    // con.query('SELECT * FROM services', function (err, result, fields) {
+    //     if (err) {
+    //         const sql = 'CREATE TABLE services (id INT AUTO_INCREMENT PRIMARY KEY,nama VARCHAR(255), url VARCHAR(255),  deskripsi VARCHAR(255), status BOOLEAN, userid VARCHAR(255) ) ';
+    //         con.query(sql, function (err, result) {
+    //             if (err) throw err;
+    //         });
+    //     }
+    // })
 
     con.query('SELECT * FROM users', function (err, result, fields) {
         if (err) {
-            const sql = 'CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY,nama VARCHAR(255), password  VARCHAR(255), pic  VARCHAR(255), email  VARCHAR(255) Not Null UNIQUE, userid VARCHAR(255) ) ';
+            const sql = 'CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY,username VARCHAR(255), password  VARCHAR(255), email  VARCHAR(255) Not Null UNIQUE, userid VARCHAR(255) ) ';
             con.query(sql, function (err, result) {
                 if (err) throw err;
             });
         }
     })
 
-    con.query('SELECT * FROM vpn', function (err, result, fields) {
-        if (err) {
-            const sql = 'CREATE TABLE vpn (id INT AUTO_INCREMENT PRIMARY KEY, nama  VARCHAR(150), status BOOLEAN, url VARCHAR(255), userid VARCHAR(255) ) ';
-            con.query(sql, function (err, result) {
-                if (err) throw err;
-            });
-        }
-    })
+    // con.query('SELECT * FROM vpn', function (err, result, fields) {
+    //     if (err) {
+    //         const sql = 'CREATE TABLE vpn (id INT AUTO_INCREMENT PRIMARY KEY, nama  VARCHAR(150), status BOOLEAN, url VARCHAR(255), userid VARCHAR(255) ) ';
+    //         con.query(sql, function (err, result) {
+    //             if (err) throw err;
+    //         });
+    //     }
+    // })
 
-    con.query('SELECT * FROM tema', function (err, result, fields) {
-        if (err) {
-            const sql = 'CREATE TABLE tema (id INT AUTO_INCREMENT PRIMARY KEY, header  VARCHAR(150), footer VARCHAR(255), logo VARCHAR(255), userid VARCHAR(255) ) ';
-            con.query(sql, function (err, result) {
-                if (err) throw err;
-            });
-        }
-    })
+    // con.query('SELECT * FROM tema', function (err, result, fields) {
+    //     if (err) {
+    //         const sql = 'CREATE TABLE tema (id INT AUTO_INCREMENT PRIMARY KEY, header  VARCHAR(150), footer VARCHAR(255), logo VARCHAR(255), userid VARCHAR(255) ) ';
+    //         con.query(sql, function (err, result) {
+    //             if (err) throw err;
+    //         });
+    //     }
+    // })
 }
 
 SelectOrCreateTable();
 
-// end
+const JwtPrivateSecrt = 'alamwibowo@ReactNodeMysql#PortalServices';
 
-
-
-// Create new user
-router.post('/Register', async (req, res) => {
-    const email = req.body.Data.email;
-    const pass = req.body.Data.password;
-    const nama = req.body.Data.nama;
-    const userid = req.body.Data.userid;
-
-    con.query(`SELECT * FROM users WHERE email = '${email}'`, function (err, result) {
-        if (err) {
-            res.send({ err: 'err' })
-        }
-        if (result.length === 0) {
-            var sql = `INSERT INTO users (nama, email, password, userid) VALUES ('${nama}', '${email}', '${pass}', '${userid}')`;
-            con.query(sql, function (err, result) {
-                if (err) { throw err; }
-                res.status(200).send({ result })
-                console.log(result)
-            })
-        } else {
-            return res.status(201).send({ message: 'Email ini telah digunakan sebelumnya !' })
-        }
-    })
-})
-// end
-
-// Create new service
-router.post('/sercreate', async (req, res) => {
-    const Token = extractToken(req);
-    console.log(Token);
-    var decoded = jwt.decode(Token, { complete: true });
-    const UserE = decoded.payload.UserEmail;
-
-    const userid = req.body.Data.userid;
-    const nama = req.body.Data.nama;
-    const deskripsi = req.body.Data.deskripsi;
-    const status = req.body.Data.status;
-
-    // console.log(userid);
-    con.query(`SELECT * FROM users WHERE email = '${UserE}' AND userid = '${userid}'`,
-        function (err, result) {
-            if (err) {
-                res.send({ err: 'err' })
-            }
-            if (result.length !== 0) {
-                var sql = `INSERT INTO services (nama, deskripsi, status, userid) VALUES ('${nama}', '${deskripsi}', '${status}', '${userid}')`;
-                con.query(sql, function (err, result) {
-                    if (err) { throw err; }
-                    res.status(200).send({ result })
-                    console.log(result)
-                })
-            } else {
-                return res.status(201).send({ message: 'Akses ditolak !' })
-            }
-        })
-})
-
-
-router.post('/newscreate', async (req, res) => {
-    const Token = extractToken(req);
-    console.log(Token);
-    var decoded = jwt.decode(Token, { complete: true });
-    const UserE = decoded.payload.UserEmail;
-
-    const userid = req.body.Data.userid;
-    const judul = req.body.Data.judul;
-    const konten = req.body.Data.konten;
-
-    // console.log(userid);
-    con.query(`SELECT * FROM users WHERE email = '${UserE}' AND userid = '${userid}'`,
-        function (err, result) {
-            if (err) {
-                res.send({ err: 'err' })
-            }
-            if (result.length !== 0) {
-                var sql = `INSERT INTO berita (judul, konten, userid) VALUES ('${judul}', '${konten}', '${userid}')`;
-                con.query(sql, function (err, result) {
-                    if (err) { throw err; }
-                    res.status(200).send({ result })
-                    console.log(result)
-                })
-            } else {
-                return res.status(201).send({ message: 'Kamu tidak memiliki akses !' })
-            }
-        })
-})
-// end
-
-const JwtPrivateSecrt = 'alam#ReactNodeProject';
-
-// login in 
-router.post('/Login', async (req, res) => {
-
-    const email = req.body.Data.email;
-    const pass = req.body.Data.password;
-    // console.log(email, pass);
-    con.query(`SELECT * FROM users WHERE email = '${email}' AND  password = '${pass}' `,
-        async function (err, result) {
-            if (result.length !== 0) {
-                jwt.sign({ UserEmail: email }, JwtPrivateSecrt,
+// Users Authentication
+router.post('/login', async (req, res) => {
+    var queryAuth;
+    const pass = md5(req.body.password);
+    const username = req.body.username;
+    const email = req.body.email;
+    // console.log(!email);
+    queryAuth = `SELECT * FROM users WHERE email = '${email}' OR username = '${username}' AND  password = '${pass}' `;
+    con.query(queryAuth, async function (err, result) {
+        if (result.length !== 0) {
+            if (username) {
+                jwt.sign({ username: username }, JwtPrivateSecrt,
+                    (err, token) => {
+                        res.status(200).send({ token: token });
+                    });
+            } else if (email) {
+                jwt.sign({ email: email }, JwtPrivateSecrt,
                     (err, token) => {
                         res.status(200).send({ token: token });
                     });
             }
-            if (result.length === 0) {
-                res.status(400).send({ message: 'error not found' });
-            }
-        });
+
+        }
+        if (result.length === 0) {
+            res.status(400).send({ message: 'error not found' });
+        }
+    });
 
 });
 
-
-
-// get user services
-router.get('/getservice/:userid', async (req, res) => {
-    const userid = req.params.userid;
-    const Token = extractToken(req);
-    console.log(Token);
-
-    var decoded = jwt.decode(Token, { complete: true });
-    const UserE = decoded.payload.UserEmail;
-
-    const theSQL = `SELECT * FROM users WHERE email = '${UserE}'`;
-    con.query(theSQL, function (err, result) {
-        if (err) throw err;
-        if (result.length !== 0) {
-            const theSQL = `SELECT * FROM services WHERE userid = '${userid}'`;
-            con.query(theSQL, function (err, result) {
-                if (err) throw err;
-                res.status(200).send({ result });
-            });
-        }
-    })
-
-
-
-})
-
-// get user data
-
-function extractToken(req) {
-    if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
-        return req.headers.authorization.split(' ')[1];
-    } else if (req.query && req.query.token) {
-        return req.query.token;
-    }
-    return null;
-}
-
-router.get('/GetUserData', async (req, res) => {
-    const Token = extractToken(req);
-
-    console.log(Token);
-    var decoded = jwt.decode(Token, { complete: true });
-    const UserE = decoded.payload.UserEmail;
-
-    const theSQL = `Select * FROM users  WHERE email = '${UserE} AND userid = '${userid}'`;
-    con.query(theSQL, function (err, result) {
-        if (err) throw err;
-        res.status(200).send({ result });
-    })
-
-})
-
-router.get('/getservices', async (req, res) => {
-    const theSQL = `SELECT * FROM services WHERE id = '57ba647b-5d1a-442a-9ff2-fef022a34f6b'`;
-    con.query(theSQL, function (err, result) {
-        if (err) throw err;
-        res.status(200).send({ result });
-        // res.json({result});
-    });
-})
-
-
-
-
-// Update services data
-
-const uploadcar = multer({
-    storage: storage, limits: { fieldSize: 12 * 1024 * 1024 }
-}).single("car");
-
-
-router.put('/edit/:userid', uploadcar, (req, res, next) => {
-
-    const userid = req.params.userid;
-    const status = req.body.Data.status;
-    const nama = req.body.Data.nama;
-    const deskripsi = req.body.Data.deskripsi;
-    // updata with mysql 
-
-    if (req.file && req.file !== '') {
-        const userid = req.body.Data.userid;
-        const status = req.body.Data.status;
-
-        const URL = req.protocol + "://" + req.get("host");
-        const fileCar = URL + "/carfile/" + req.file.filename;
-
-        const nama = req.body.Data.nama;
-        const deskripsi = req.body.Data.deskripsi;
-
-        con.query(`SELECT * FROM services WHERE userid = '${userid}'`, function (err, result) {
+// Pendaftaran Users
+router.post('/signup', async (req, res) => {
+    const email = req.body.email;
+    const pass = md5(req.body.password);
+    const username = req.body.username;
+    const userid = md5(email);
+    if (username && email && pass) {
+        con.query(`SELECT * FROM users WHERE email = '${email}' AND username = '${username}'`, function (err, result) {
             if (err) {
-                res.send({ err: 'err' })
+                res.send({ err: 'Something Went Wrong !' })
             }
-            if (result.length !== 0) {
-                // Update Mysql 
-
-                const sqql = `UPDATE services SET nama = '${nama}', deskripsi = '${deskripsi}', status = '${status}' WHERE userid = '${userid}'`;
-                con.query(sqql, function (err, result) {
+            if (result.length === 0) {
+                var sql = `INSERT INTO users (username, email, password, userid) VALUES ('${username}', '${email}', '${pass}', '${userid}')`;
+                con.query(sql, function (err, result) {
                     if (err) { throw err; }
                     res.status(200).send({ result })
                     console.log(result)
                 })
+
             } else {
-                return res.status(404).send({ message: 'Services tidak ditemukan !' })
+                return res.status(201).send({ message: 'Email atau Username telah digunakan !' })
             }
-        })
-
-    } else {
-        const userid = req.body.Data.userid;
-        const status = req.body.Data.status;
-        const nama = req.body.Data.nama;
-        const deskripsi = req.body.Data.deskripsi;
-        // updata with mysql 
-
-        con.query(`SELECT * FROM services WHERE userid = '${userid}'`, function (err, result) {
-            if (err) {
-                res.send({ err: 'err' })
-            }
-            if (result.length !== 0) {
-                // Update Mysql 
-
-                const sqql = `UPDATE services SET nama = '${nama}', deskripsi = '${deskripsi}', status = '${status}' WHERE userid = '${userid}'`;
-                con.query(sqql, function (err, result) {
-                    if (err) { throw err; }
-                    res.status(200).send({ result })
-                    console.log(result)
-                })
-            } else {
-                return res.status(404).send({ message: 'Services portal tidak ditemukan !' })
-            }
-        })
-    }
-})
-
-// Updataa user data name pic address
-
-const upload = multer({
-    storage: storage, limits: { fieldSize: 12 * 1024 * 1024 }
-}).single("image");
-
-
-router.put('/edit/:id', upload, (req, res, next) => {
-    if (req.file && req.file !== '') {
-        const id = req.params.id;
-        const URL = req.protocol + "://" + req.get("host");
-        const pic = URL + "/images/" + req.file.filename;
-
-        const nama = req.body.nama;
-        const alamat = req.body.alamat;
-        // updata with mysql
-        const sqql = `UPDATE users SET nama = '${nama}', alamat = '${alamat}', pic = '${pic}' WHERE id = '${id}'`;
-        con.query(sqql, function (err, result) {
-            if (err) throw err;
-            res.status(200).send({ message: "sucsessfuly", result })
         })
     } else {
-        const id = req.params.id;
-        const nama = req.body.nama;
-        const alamat = req.body.alamat;
-        // updata with mysql 
-        const sqql = `UPDATE users SET nama = '${nama}', alamat = '${alamat}' WHERE id = '${id}'`;
-        con.query(sqql, function (err, result) {
-            if (err) throw err;
-            res.status(200).send({ message: 'updataed', result })
-        })
+        res.status(203).send({ message: "Required Valid field !" });
     }
-})
-
-
-
-// delete one services
-
-router.delete('/services/:id/:userid', (req, res, next) => {
-    const userid = req.params.userid;
-    const id = req.params.id;
-
-    con.query(`SELECT * FROM services WHERE id ='${id}' AND userid = '${userid}'`,
-        async function (err, result) {
-            if (result.length !== 0) {
-                // the password is correct
-                con.query(`DELETE FROM services WHERE id = '${id}'`,
-                    async function (err, result) {
-                        if (err) throw (err);
-                        res.status(200).send({ message: result })
-                    })
-            }
-            if (result.length === 0) {
-                res.status(400).send({ message: 'Parameter id salah !' });
-            }
-        })
 
 })
-
-// delete one user 
-
-router.delete('/delete/:id/:password', (req, res, next) => {
-
-    const id = req.params.id;
-    const Pass = req.params.password;
-
-
-    con.query(`SELECT * FROM users WHERE id='${id}' AND Password = '${Pass}'`,
-        async function (err, result) {
-            if (result.length !== 0) {
-                // the password is correct
-                con.query(`DELETE FROM users WHERE id = '${id}'`,
-                    async function (err, result) {
-                        if (err) throw (err);
-                        res.status(200).send({ message: result })
-                    })
-            }
-            if (result.length === 0) {
-                res.status(400).send({ message: 'error the password is not correct' });
-            }
-        })
-})
-
-
-
 
 module.exports = router;

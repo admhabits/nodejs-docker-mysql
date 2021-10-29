@@ -7,9 +7,9 @@
 // }
 
 module.exports = {
-    HOST: 'localhost',
-    DB_NAME:'api_portal',
+    HOST: '10.106.12.196',
+    DB_NAME:'portal',
     USER_NAME:'root',
-    DB_SECRET:'keren121224',
-    PORT: 8000,
+    DB_SECRET:'zWTbwHJ2bs',
+    PORT: 4000,
 }
