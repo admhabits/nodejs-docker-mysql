@@ -123,27 +123,34 @@ router.post('/login', async (req, res) => {
     const username = req.body.username;
     const email = req.body.email;
     // console.log(!email);
-    queryAuth = `SELECT * FROM users WHERE email = '${email}' OR username = '${username}' AND  password = '${pass}' `;
+    queryAuth = `SELECT userid FROM users WHERE email = '${email}' OR username = '${username}' AND  password = '${pass}' `;
     con.query(queryAuth, async function (err, result) {
         if (result.length !== 0) {
-            if (username) {
-                jwt.sign({ username: username }, JwtPrivateSecrt,
-                    (err, token) => {
-                        res.status(200).send({ token: token });
-                    });
-            } else if (email) {
-                jwt.sign({ email: email }, JwtPrivateSecrt,
-                    (err, token) => {
-                        res.status(200).send({ token: token });
-                    });
-            }
-
+           // GET USER ID
+            GetUserId(result)
         }
         if (result.length === 0) {
             res.status(400).send({ message: 'error not found' });
         }
     });
+    function GetUserId(rows){
+        const result = Object.values(JSON.parse(JSON.stringify(rows)));
+        const userid = result[0].userid;
+        console.log("Get ID in CREATE TOKEN LOGIN : " + result[0].userid);
 
+
+        if (username) {
+            jwt.sign({ username: username, userid: userid }, JwtPrivateSecrt,
+                (err, token) => {
+                    res.status(200).send({ token: token, message: "Token U Generated!" });
+                });
+        } else if (email) {
+            jwt.sign({ email: email, userid: userid }, JwtPrivateSecrt,
+                (err, token) => {
+                    res.status(200).send({ token: token, message: "Token E Generated!"});
+                });
+        }
+    }
 });
 
 // Pendaftaran Users

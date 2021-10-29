@@ -3,7 +3,9 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const router = express.Router();
+const fs = require('fs');
 const md5 = require('md5');
+
 // Data Configuration
 const DB_NAME = require('../config/data').DB_NAME;
 const HOST = require('../config/data').HOST;
@@ -104,20 +106,25 @@ router.post('/update/:id', upload.single("file"), async (req, res, next) => {
 
     //GANTI METODE USER LOGIN
     let email = decoded.payload.email;
+    let userid = decoded.payload.userid;
+    let id = req.params.id;
+    
     if (!email) {
         email = decoded.payload.username;
     }
 
+    const buatFileName = `services-${md5(userid)}.car`;
     const URL = req.protocol + "://" + req.get("host");
-    const fileCar = URL + "/carfile/" + req.file.filename;
+
+    const fileCar = URL + "/carfile/" + buatFileName;
+    fs.renameSync(req.file.path, req.file.path.replace(req.file.filename, buatFileName));
 
     const nama = req.body.nama;
     const deskripsi = req.body.deskripsi;
-    const id = req.params.id;
+
 
     const status = 0;
     const tanggal = new Date().toLocaleDateString().toString();
-
 
     console.log("GET TOKEN FROM BEARER : " + decoded);
     console.log("STATUS SERVICE : " + status);
@@ -181,13 +188,14 @@ router.post('/update/status/:id', async (req, res, next) => {
 
     //GANTI METODE USER LOGIN
     let email = decoded.payload.email;
- 
+    console.log("GET status FROM QUERY PARAMS : " + status);
+
 
     if (!email) {
         email = decoded.payload.username;
     }
     const id = req.params.id;
-   
+
     if (status === 'true') {
         status = 1;
     } else {
@@ -230,7 +238,7 @@ router.post('/update/status/:id', async (req, res, next) => {
                 // res.status(203).send({message: "Services telah dibuat !"})
                 con.query(updateServices, function (err, result) {
                     if (err) { throw err; }
-                    if(status === 0){
+                    if (status === 0) {
                         status = false;
                     } else {
                         status = true;
@@ -258,7 +266,7 @@ router.post('/delete/:id', async (req, res, next) => {
 
     const id = req.params.id;
     console.log("GET TOKEN FROM BEARER : " + decoded);
-  
+
     con.query(`SELECT userid FROM users WHERE email = '${email}' OR username = '${email}'`,
         function (err, result) {
             if (err) {
@@ -305,15 +313,20 @@ router.post('/create', upload.single("file"), async (req, res, next) => {
     const Token = extractToken(req);
     // console.log(Token);
     var decoded = jwt.decode(Token, { complete: true });
-
+    let userid = decoded.payload.userid;
+    
     //GANTI METODE USER LOGIN
     let email = decoded.payload.email;
+
     if (!email) {
         email = decoded.payload.username;
     }
 
+    const buatFileName = `services-${md5(userid)}.car`;
     const URL = req.protocol + "://" + req.get("host");
-    const fileCar = URL + "/carfile/" + req.file.filename;
+
+    const fileCar = URL + "/carfile/" + buatFileName;
+    fs.renameSync(req.file.path, req.file.path.replace(req.file.filename, buatFileName));
 
     const nama = req.body.nama;
     const deskripsi = req.body.deskripsi;

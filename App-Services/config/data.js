@@ -11,5 +11,5 @@ module.exports = {
     DB_NAME:'api_portal',
     USER_NAME:'root',
     DB_SECRET:'keren121224',
-    PORT: 8000,
+    PORT: 5000,
 }
