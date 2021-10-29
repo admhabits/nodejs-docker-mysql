@@ -23,7 +23,8 @@ const con = mysql.createConnection({
 
 con.connect(function (err) {
     if (err) throw err;
-    console.log('connected!', err)
+    console.log('Services Query Connected!');
+
 })
 
 con.on('error', () => console.log('err'))
