@@ -40,7 +40,7 @@ const con = mysql.createConnection({
 
 con.connect(function (err) {
   if (err) throw err;
-  console.log('connected!', err)
+  // console.log('connected!', err)
 })
 
 con.on('error', () => console.log('err'))
@@ -73,5 +73,5 @@ app.use('/api/services', Services);
 const port = process.env.PORT || 8000;
 
 // run the server 
-app.listen(port, () => console.log(` app listen on port ${port}`))
+app.listen(port, () => console.log(`app listen on port ${port}`))
 
