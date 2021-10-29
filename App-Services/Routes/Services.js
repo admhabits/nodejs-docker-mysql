@@ -38,8 +38,6 @@ con._protocol._delegateError = function (err, sequence) {
 };
 
 
-
-
 // Pilih atau Buat Tabel User & Services
 
 function SelectOrCreateTable() {
@@ -175,27 +173,29 @@ PLANNING NOTES USER PRIVILLEDGE :
 ==================================================
 */
 
-router.post('/update/status/:id/?active=:status', async (req, res, next) => {
+router.post('/update/status/:id', async (req, res, next) => {
     const Token = extractToken(req);
     var decoded = jwt.decode(Token, { complete: true });
+    var status = req.query.active;
+    console.log("GET status FROM QUERY PARAMS : " + status);
 
     //GANTI METODE USER LOGIN
     let email = decoded.payload.email;
-    let status = req.params.status;
+ 
 
     if (!email) {
         email = decoded.payload.username;
     }
     const id = req.params.id;
-
-    if (status === true) {
+   
+    if (status === 'true') {
         status = 1;
     } else {
         status = 0;
     }
 
     console.log("GET TOKEN FROM BEARER : " + decoded);
-    console.log("GET variable status FROM PARAMS : " + status);
+    console.log("ASSIGN VARIABLE Status AFTER CHECKING : " + status);
 
     con.query(`SELECT userid FROM users WHERE email = '${email}' OR username = '${email}'`,
         function (err, result) {
@@ -230,7 +230,12 @@ router.post('/update/status/:id/?active=:status', async (req, res, next) => {
                 // res.status(203).send({message: "Services telah dibuat !"})
                 con.query(updateServices, function (err, result) {
                     if (err) { throw err; }
-                    res.status(200).send({ message: `Status service updated with id ${id}!` })
+                    if(status === 0){
+                        status = false;
+                    } else {
+                        status = true;
+                    }
+                    res.status(200).send({ message: `Status service updated with id ${id} & active is ${status}!` })
                 })
             } else {
                 res.status(404).send({ message: `Services tidak ditemukan dengan id ${id}!` })
