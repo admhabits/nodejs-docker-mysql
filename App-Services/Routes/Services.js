@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const router = express.Router();
 const fs = require('fs');
-const md5 = require('md5');
 
 // Data Configuration
 const DB_NAME = require('../config/data').DB_NAME;
@@ -96,10 +95,10 @@ const upload = multer({
     limits: {
         fieldSize: 12 * 1024 * 1024
     }
-});
+}).single("file");
 
 // UPDATE SERVICE BY ID
-router.post('/update/:id', upload.single("file"), async (req, res, next) => {
+router.post('/update/:id', upload, async (req, res, next) => {
     const Token = extractToken(req);
     // console.log(Token);
     var decoded = jwt.decode(Token, { complete: true });
@@ -108,15 +107,15 @@ router.post('/update/:id', upload.single("file"), async (req, res, next) => {
     let email = decoded.payload.email;
     let userid = decoded.payload.userid;
     let id = req.params.id;
-    
+
     if (!email) {
         email = decoded.payload.username;
     }
 
-    const buatFileName = `services-${md5(userid)}-${id}.car`;
+    const buatFileName = `services-${userid}-${id}.car`;
     const URL = req.protocol + "://" + req.get("host");
 
-    const fileCar = URL + "/carfile/" + buatFileName;
+    const fileURL = URL + "/carfile/" + buatFileName;
     fs.renameSync(req.file.path, req.file.path.replace(req.file.filename, buatFileName));
 
     const nama = req.body.nama;
@@ -151,7 +150,7 @@ router.post('/update/:id', upload.single("file"), async (req, res, next) => {
         const queryServices = `SELECT userid FROM services WHERE userid = '${userid}' AND id = ${id}`;
 
         // Update Services Query
-        const updateServices = `UPDATE services SET nama_service = '${nama}', file_upload = '${fileCar}', deskripsi = '${deskripsi}', status = '${status}', tanggal = '${tanggal}' WHERE userid = '${userid}' AND id = '${id}'`;
+        const updateServices = `UPDATE services SET nama_service = '${nama}', file_upload = '${fileURL}', deskripsi = '${deskripsi}', status = '${status}', tanggal = '${tanggal}' WHERE userid = '${userid}' AND id = '${id}'`;
 
         con.query(queryServices, function (err, result) {
             if (err) {
@@ -309,60 +308,69 @@ router.post('/delete/:id', async (req, res, next) => {
 })
 
 // CREATE SERVICES
-router.post('/create', upload.single("file"), async (req, res, next) => {
+router.post('/create', upload, async (req, res, next) => {
     const Token = extractToken(req);
     // console.log(Token);
+    const status = 0; // Disable Status Service
     var decoded = jwt.decode(Token, { complete: true });
-    let userid = decoded.payload.userid;
-    
-    //GANTI METODE USER LOGIN
-    let email = decoded.payload.email;
-
-    if (!email) {
-        email = decoded.payload.username;
-    }
-
-    const buatFileName = `services-${md5(userid)}.car`;
-    const URL = req.protocol + "://" + req.get("host");
-
-    const fileCar = URL + "/carfile/" + buatFileName;
-    fs.renameSync(req.file.path, req.file.path.replace(req.file.filename, buatFileName));
-
+    const userid = decoded.payload.userid;
+    const tanggal = new Date().toLocaleDateString();
     const nama = req.body.nama;
     const deskripsi = req.body.deskripsi;
 
-    const status = 0;
-    const tanggal = new Date().toLocaleDateString().toString();
+    //GANTI METODE USER LOGIN
+    var userAccount;
 
-    console.log("GET TOKEN FROM BEARER : " + decoded);
-    console.log("START create STATUS SERVICE WITH : " + status);
-
-    con.query(`SELECT userid FROM users WHERE email = '${email}' OR username = '${email}'`,
-        function (err, result) {
-            if (err) {
-                res.send({ err: 'err' });
-            }
-            if (result.length !== 0) {
-                // Panggil BuatService Function
-                BuatService(result);
-            } else {
-                return res.status(201).send({ message: 'Akses ditolak !' });
-            }
-        })
-
-
-    function BuatService(rows) {
-        const result = Object.values(JSON.parse(JSON.stringify(rows)));
-        const userid = result[0].userid;
-        console.log("Get UserID in CREATE Services : " + result[0].userid);
-
-        // Buat Services Query
-        const buatServices = `INSERT INTO services (nama_service, file_upload, deskripsi, status, userid, tanggal) VALUES ('${nama}', '${fileCar}', '${deskripsi}', '${status}', '${userid}', '${tanggal}')`;
-        con.query(buatServices, function (err, result) {
-            if (err) { throw err; }
-            res.status(200).send({ message: "Service berhasil dibuat!" })
-        })
+    if (!req.body.username) {
+        userAccount = decoded.payload.username;
+    } else {
+        userAccount = decoded.payload.email;
     }
+
+    con.query(`SELECT userid FROM users WHERE email = '${userAccount}' OR username = '${userAccount}'`,
+        function (err, result) {
+            if (err) throw err;
+            if (result.length !== 0) {
+                buatService(result);
+            }
+        }
+
+    )
+
+    function buatService(rows) {
+        // Ambil UserID Setelah Menjalankan Query
+        const row = Object.values(JSON.parse(JSON.stringify(rows)));
+        const userID = row[0].userid;
+
+        let namaFile = `services-${userid}.car`;
+        const URL = req.protocol + "://" + req.get("host");
+        let fileURL = URL + "/carfile/" + namaFile;
+
+        // fs.renameSync(req.file.path, req.file.path.replace(req.file.filename, namaFile));
+        console.log("GET TOKEN FROM BEARER : ", decoded);
+        console.log("START create STATUS SERVICE WITH : " + status);
+        console.log("FILE URI : " + fileURL + "\n");
+
+        con.query(`INSERT INTO services (nama_service, file_upload, deskripsi, status, userid, tanggal) VALUES ('${nama}', '${fileURL}', '${deskripsi}', '${status}', '${userid}', '${tanggal}')`,
+            function (err, result) {
+                if (err) throw err;
+                renameFile(result.insertId);
+            })
+
+        function renameFile(insertId) {
+            namaFile = `services-${userid}-${insertId}.car`;
+            const newURL = URL + "/carfile/" + namaFile;
+            fs.renameSync(req.file.path, req.file.path.replace(req.file.filename, namaFile));
+            con.query(`UPDATE services SET file_upload = '${newURL}' WHERE id = ${insertId}`, function (err, result) {
+                if (err) throw err;
+                res.status(200).send({
+                    result,
+                    message: 'success'
+                })
+            });
+        }
+    }
+
 })
 
 

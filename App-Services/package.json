@@ -4,7 +4,7 @@
   "description": "REST API PUBLISHER SERVICES",
   "main": "index.js",
   "scripts": {
-    "start": "node Server.js"
+    "start": "nodemon Server.js"
   },
   "engines": {
     "node": "12.13.1"
