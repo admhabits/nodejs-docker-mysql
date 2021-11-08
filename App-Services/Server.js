@@ -1,6 +1,7 @@
 const mysql = require('mysql');
 const express = require('express');
-const bodyParser = require('body-parser');
+const https = require('https');
+const fs = require('fs');
 const cors = require('cors');
 const path = require('path');
 
@@ -22,6 +23,7 @@ const DB_NAME = require('./config/data').DB_NAME;
 const HOST = require('./config/data').HOST;
 const DB_SECRET = require('./config/data').DB_SECRET;
 const USER_NAME = require('./config/data').USER_NAME;
+const PORT = require('./config/data').PORT;
 
 //end of
 
@@ -60,10 +62,18 @@ app.use('/carfile', express.static(path.join(__dirname, 'carfile')))
 app.use(express.static(path.join(__dirname, 'react')))
 
 app.get('/*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'App', 'index.html'))
-  // res.json({ message: "Welcome to portal application." });
+  // res.sendFile(path.join(__dirname, 'App', 'index.html'))
+  res.json({ message: "Welcome to portal application." });
 })
 
+var key = fs.readFileSync(__dirname + '/cert/selfsigned.key');
+var cert = fs.readFileSync(__dirname + '/cert/selfsigned.crt');
+var options = {
+  key: key,
+  cert: cert
+};
+
+var server = https.createServer(options, app);
 
 // API ROUTES
 app.use('/api/users', Users);
@@ -71,8 +81,8 @@ app.use('/api/services', Services);
 
 // port
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 4000;
 
 // run the server 
-app.listen(port, () => console.log(`app listen on port ${port}`))
+server.listen(port, () => console.log(`app listen on port ${port}`))
 

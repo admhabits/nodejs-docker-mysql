@@ -126,14 +126,14 @@ router.post('/login', async (req, res) => {
     queryAuth = `SELECT userid FROM users WHERE email = '${email}' OR username = '${username}' AND  password = '${pass}' `;
     con.query(queryAuth, async function (err, result) {
         if (result.length !== 0) {
-           // GET USER ID
+            // GET USER ID
             GetUserId(result)
         }
         if (result.length === 0) {
             res.status(400).send({ message: 'error not found' });
         }
     });
-    function GetUserId(rows){
+    function GetUserId(rows) {
         const result = Object.values(JSON.parse(JSON.stringify(rows)));
         const userid = result[0].userid;
         console.log("Get ID in CREATE TOKEN LOGIN : " + result[0].userid);
@@ -147,7 +147,7 @@ router.post('/login', async (req, res) => {
         } else if (email) {
             jwt.sign({ email: email, userid: userid }, JwtPrivateSecrt,
                 (err, token) => {
-                    res.status(200).send({ token: token, message: "Token E Generated!"});
+                    res.status(200).send({ token: token, message: "Token E Generated!" });
                 });
         }
     }
@@ -155,9 +155,10 @@ router.post('/login', async (req, res) => {
 
 // Pendaftaran Users
 router.post('/signup', async (req, res) => {
-    const email = req.body.email;
-    const pass = md5(req.body.password);
-    const username = req.body.username;
+    console.log(req.body);
+    const email = req.body.signup.email;
+    const pass = md5(req.body.signup.password);
+    const username = req.body.signup.username;
     const userid = md5(email);
     if (username && email && pass) {
         con.query(`SELECT * FROM users WHERE email = '${email}' AND username = '${username}'`, function (err, result) {
@@ -168,16 +169,44 @@ router.post('/signup', async (req, res) => {
                 var sql = `INSERT INTO users (username, email, password, userid) VALUES ('${username}', '${email}', '${pass}', '${userid}')`;
                 con.query(sql, function (err, result) {
                     if (err) { throw err; }
-                    res.status(200).send({ result })
+                    res.status(200).send({ result, message: 'Pendaftaran berhasil!', code: 200 })
                     console.log(result)
                 })
 
-            } else {
-                return res.status(201).send({ message: 'Email atau Username telah digunakan !' })
+            } else if(result.length !== 0){
+                // return res.status(201).send({ message: 'Email atau Username telah digunakan !', code: 201})
+                // Jika ada data users maka Buat Token
+                buatToken();
+                
             }
         })
     } else {
         res.status(203).send({ message: "Required Valid field !" });
+    }
+
+    function buatToken(){
+        var queryAuth = `SELECT userid FROM users WHERE email = '${email}' OR username = '${username}' AND  password = '${pass}' `;
+        con.query(queryAuth, async function (err, result) {
+            if (result.length !== 0) {
+                // GET USER ID
+                GetUserId(result)
+            }
+            if (result.length === 0) {
+                res.status(400).send({ message: 'error not found' });
+            }
+        });
+        function GetUserId(rows) {
+            const result = Object.values(JSON.parse(JSON.stringify(rows)));
+            const userid = result[0].userid;
+            console.log("Get ID in CREATE TOKEN LOGIN : " + result[0].userid);
+    
+            if (email) {
+                jwt.sign({ email: email, userid: userid }, JwtPrivateSecrt,
+                    (err, token) => {
+                        res.status(204).send({ token: token, message: "Token Email Generated!" });
+                    });
+            }
+        }
     }
 
 })
