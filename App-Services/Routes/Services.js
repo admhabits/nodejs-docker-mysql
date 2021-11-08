@@ -69,7 +69,10 @@ function extractToken(req) {
 
 // Pengaturan Jenis Tipe Gambar
 const MIME_TYPE_MAP = {
-    "application/vnd.curl.car": 'car'
+    "application/vnd.curl.car": 'car',
+    "image/png": 'png',
+    "image/jpg": 'jpg',
+    "image/jpeg": 'jpeg'
 };
 
 const storage = multer.diskStorage({
@@ -99,6 +102,7 @@ const upload = multer({
 
 // UPDATE SERVICE BY ID
 router.post('/update/:id', upload, async (req, res, next) => {
+    console.log(req.body);
     const Token = extractToken(req);
     const nama = req.body.nama;
     const deskripsi = req.body.deskripsi;
@@ -136,7 +140,7 @@ router.post('/update/:id', upload, async (req, res, next) => {
         const status = 0;
         const tanggal = new Date().toLocaleDateString().toString();
 
-        console.log("GET TOKEN FROM BEARER : " + decoded);
+        console.log("GET TOKEN FROM BEARER : ", decoded);
         console.log("STATUS SERVICE : " + status);
 
         con.query(`SELECT userid FROM users WHERE email = '${email}' OR username = '${email}'`,
@@ -231,7 +235,7 @@ router.post('/update/status/:id', async (req, res, next) => {
         status = 0;
     }
 
-    console.log("GET TOKEN FROM BEARER : " + decoded);
+    console.log("GET TOKEN FROM BEARER : ", decoded);
     console.log("ASSIGN VARIABLE Status AFTER CHECKING : " + status);
 
     con.query(`SELECT userid FROM users WHERE email = '${email}' OR username = '${email}'`,
@@ -294,7 +298,7 @@ router.post('/delete/:id', async (req, res, next) => {
     }
 
     const id = req.params.id;
-    console.log("GET TOKEN FROM BEARER : " + decoded);
+    console.log("GET TOKEN FROM BEARER : ", decoded);
 
     con.query(`SELECT userid FROM users WHERE email = '${email}' OR username = '${email}'`,
         function (err, result) {
@@ -339,6 +343,8 @@ router.post('/delete/:id', async (req, res, next) => {
 
 // CREATE SERVICES
 router.post('/create', upload, async (req, res, next) => {
+    console.log(req.body);
+    console.log(req.file);
     const Token = extractToken(req);
     const status = 0; // Disable Status Service
     var decoded = jwt.decode(Token, { complete: true });
@@ -350,18 +356,16 @@ router.post('/create', upload, async (req, res, next) => {
     if (!Token) {
         res.status(404).send({ message: "Authorization token is required" })
     }
-    if (!nama && !deskripsi && !req.file) {
+    if (!nama && !deskripsi && !req.file.path) {
         res.status(500).send({ message: "Invalid body payload request" })
-    } else if (!nama || !deskripsi || !req.file) {
+    } else if (!nama || !deskripsi || !req.file.path) {
         res.status(500).send({ message: "Missing body payload request" })
     } else {
-        // console.log(Token);
-
-
+        console.log(Token);
         //GANTI METODE USER LOGIN
         var userAccount;
 
-        if (!req.body.username) {
+        if (req.body.username) {
             userAccount = decoded.payload.username;
         } else {
             userAccount = decoded.payload.email;
