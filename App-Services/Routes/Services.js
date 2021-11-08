@@ -103,22 +103,24 @@ const upload = multer({
 
 router.patch('/getservices', async (req, res) => {
     const Token = extractToken(req);
-    if (!Token) {
-        res.status(404).send({ message: "Authorization token is required", code: 404 })
+    if(req.body.type === 'services'){
+        console.log("GET TOKEN FROM REQ : ", Token)
+        var decoded = jwt.decode(Token, { complete: true });
+        let userid = decoded.payload.userid;
+        console.log("GET TOKEN DECODED : ", decoded);
+        console.log("GET USERID : " + userid);
+        let queryGetServices = `SELECT * FROM services WHERE userid = '${userid}'`;
+        con.query(queryGetServices, (err, result) => {
+            if (err) throw err;
+            if (result.length !== 0) {
+                res.status(200).send({ message: 'success', code: 200, result });
+            } else {
+                res.status(404).send({ message: 'Tidak ada services', code: 404 });
+            }
+        })
+    } else {
+        res.status(501).send({message: 'Invalid type request !', code: 501})
     }
-    var decoded = jwt.decode(Token, { complete: true });
-    let userid = decoded.payload.userid;
-    console.log("GET TOKEN DECODED : ", decoded);
-    console.log("GET USERID : " + userid);
-    let queryGetServices = `SELECT * FROM services WHERE userid = '${userid}'`;
-    con.query(queryGetServices, (err, result) => {
-        if(err) throw err;
-        if(result.length !== 0){
-            res.status(200).send({ message: 'success', code: 200, result});
-        } else {
-            res.status(404).send({message: 'Tidak ada services', code: 404});
-        }
-    })
 })
 
 // UPDATE SERVICE BY ID
@@ -129,7 +131,7 @@ router.post('/update/:id', upload, async (req, res, next) => {
     const deskripsi = req.body.deskripsi;
 
     if (!Token) {
-        res.status(404).send({ message: "Authorization token is required", code: 404})
+        res.status(404).send({ message: "Authorization token is required", code: 404 })
     }
     if (!nama && !deskripsi && !req.file) {
         res.status(500).send({ message: "Invalid body payload request", code: 500 })
