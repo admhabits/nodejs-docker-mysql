@@ -334,7 +334,7 @@ router.post('/update/status/:id', async (req, res, next) => {
                     } else {
                         status = true;
                     }
-                    res.status(200).send({ message: `Status service updated with id ${id} & active is ${status}!` })
+                    res.status(200).send({ message: `Status service updated with id ${id} & active is ${status}!`, code: 200 })
                 })
             } else {
                 res.status(404).send({ message: `Services tidak ditemukan dengan id ${id}!` })
