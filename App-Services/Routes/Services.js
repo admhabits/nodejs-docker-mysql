@@ -127,6 +127,37 @@ router.patch('/getservices', async (req, res) => {
     }
 })
 
+// GET SERVICES BY ID
+router.patch('/getservicebyid', async (req, res) => {
+    const Token = extractToken(req);
+    if (req.body.type === 'services') {
+        console.log("GET TOKEN FROM REQ : ", Token)
+        if (Token !== null) {
+            var decoded = jwt.decode(Token, { complete: true });
+            let userid = decoded.payload.userid;
+            console.log("GET TOKEN DECODED : ", decoded);
+            console.log("GET USERID : " + userid);
+            if (req.body.id) {
+                let queryGetServices = `SELECT * FROM services WHERE userid = '${userid}' AND id = '${req.body.id}'`;
+                con.query(queryGetServices, (err, result) => {
+                    if (err) throw err;
+                    if (result.length !== 0) {
+                        res.status(200).send({ message: 'success', code: 200, result });
+                    } else {
+                        res.status(404).send({ message: 'Tidak ada services', code: 404 });
+                    }
+                })
+            } else {
+                res.status(404).send({ message: 'Missing payload id services !', code: 204 })
+            }
+        } else {
+            res.status(403).send({ message: 'Authorization is required !', code: 403 })
+        }
+    } else {
+        res.status(501).send({ message: 'Invalid type request !', code: 501 })
+    }
+})
+
 // UPDATE SERVICE BY ID
 router.post('/update/:id', upload, async (req, res, next) => {
     console.log(req.body);
@@ -135,13 +166,11 @@ router.post('/update/:id', upload, async (req, res, next) => {
     const deskripsi = req.body.deskripsi;
 
     if (!Token) {
-        res.status(404).send({ message: "Authorization token is required", code: 404 })
+        res.status(404).send({ info: "Authorization token is required", code: 404, status: 'error'})
     }
     if (!nama && !deskripsi && !req.file) {
-        res.status(500).send({ message: "Invalid body payload request", code: 500 })
-    } else if (!nama || !deskripsi /* || !req.file */) {
-        res.status(500).send({ message: "Missing body payload request", code: 500 })
-    } else {
+        res.status(500).send({ info: "Invalid body payload request", code: 500, status: 'error'})
+    } else if(nama && deskripsi && req.file){
         // console.log(Token);
         var decoded = jwt.decode(Token, { complete: true });
 
@@ -179,7 +208,7 @@ router.post('/update/:id', upload, async (req, res, next) => {
                     //Panggil Update Services Function
                     UpdateService(result);
                 } else {
-                    return res.status(204).send({ message: 'Access denied!', code: 204 });
+                    return res.status(204).send({ message: 'Access denied!', code: 204, status: 'denied' });
                 }
             })
 
@@ -220,13 +249,15 @@ router.post('/update/:id', upload, async (req, res, next) => {
                     // res.status(203).send({message: "Services telah dibuat !"})
                     con.query(updateServices, function (err, result) {
                         if (err) { throw err; }
-                        res.status(200).send({ message: `Updated service with id ${id}!`, code: 200, result })
+                        res.status(200).send({ info: `Updated service with id ${id}!`, code: 200, status: 'success' })
                     })
                 } else {
-                    res.status(404).send({ message: `Services tidak ditemukan dengan id ${id}!`, code: 400 })
+                    res.status(404).send({ info: `Services tidak ditemukan dengan id ${id}!`, code: 400, status: 'failed' })
                 }
             })
         }
+    } else {
+        res.status(500).send({ info: "Missing body payload request", code: 500, status: 'error' })
     }
 
 })
