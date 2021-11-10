@@ -4,7 +4,7 @@ const multer = require('multer');
 const router = express.Router();
 const fs = require('fs');
 const con = require('../config/connect');
-const { extractToken, isBodyEmpty } = require('../Utils/General');
+const extractToken = require('../Utils/General');
 const initDatabase = require('../Utils/Tables');
 
 // Pilih atau Buat Tabel Services
