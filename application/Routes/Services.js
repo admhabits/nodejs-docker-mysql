@@ -185,11 +185,11 @@ router.post('/update/:id', upload, async (req, res, next) => {
     const deskripsi = req.body.deskripsi;
 
     if (!Token) {
-        res.status(404).send({ info: "Authorization token is required", code: 404, status: 'error'})
+        res.status(404).send({ info: "Authorization token is required", code: 404, status: 'error' })
     }
     if (!nama && !deskripsi && !req.file) {
-        res.status(500).send({ info: "Invalid body payload request", code: 500, status: 'error'})
-    } else if(nama && deskripsi && req.file){
+        res.status(500).send({ info: "Invalid body payload request", code: 500, status: 'error' })
+    } else if (nama && deskripsi && req.file) {
         // console.log(Token);
         var decoded = jwt.decode(Token, { complete: true });
 
@@ -393,10 +393,14 @@ router.post('/delete/:id', async (req, res, next) => {
             }
             if (result.length !== 0) {
                 // Jika ada maka dihapus
-                // const urlFIle = result[0];
-                console.log(result);
+                console.log("RESULT", + result);
+                const dirFile = `carfile/services-${userid}-${id}.car`;
+                console.log("GET DIRECTORY FILE : " + dirFile);
+                
                 con.query(DeleteQuery, function (err, result) {
                     if (err) { throw err; }
+                    //File Hapus
+                    hapusFile(dirFile)
                     res.status(200).send({ message: `Hapus service dengan id ${id}!` })
                 })
             } else {
@@ -405,13 +409,16 @@ router.post('/delete/:id', async (req, res, next) => {
         })
     }
 
-    function hapusFile(path){
+    function hapusFile(path) {
         try {
-            fs.unlink(path)
+            fs.unlinkSync(path, (err) => {
+                if (err) throw err;
+                console.log(path + "FILE DELETED SUCCESS");
+            })
             //file removed
-          } catch(err) {
+        } catch (err) {
             console.error(err)
-          }
+        }
     }
 })
 
