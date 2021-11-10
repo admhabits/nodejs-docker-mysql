@@ -3,7 +3,6 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 const md5 = require('md5');
-const initTables = require('../Utils/Tables');
 
 // Pilih atau Buat Tabel Services
 const SELECT = 'SELECT * FROM users';

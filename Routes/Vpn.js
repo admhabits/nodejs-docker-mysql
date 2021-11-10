@@ -3,7 +3,6 @@ const router = express.Router();
 const fs = require('fs');
 const con = require('../config/connect');
 const jwt = require('jsonwebtoken');
-const Tables = require('../Utils/Tables');
 const { body, validationResult } = require('express-validator');
 
 // Pilih atau Buat Tabel Services
