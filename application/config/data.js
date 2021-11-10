@@ -1,4 +1,5 @@
-
+// require('dotenv').config(); 
+/* Uncomment Line 1 Ketika menggunakan env pengembangan local */
 module.exports = {
     HOST: 'mysqldb',
     DB_NAME:'api_portal',
