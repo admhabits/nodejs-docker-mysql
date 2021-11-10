@@ -25,7 +25,7 @@ services:
       - DB_USER=$DB_USER
       - DB_PASS=$DB_PASS
       - DB_NAME=$DB_NAME
-      - DB_PORT=$DB_DOCKER_PORT
+      - DB_PORT=$NODE_DOCKER_PORT
     stdin_open: true
     tty: true
 
