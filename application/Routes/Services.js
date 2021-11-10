@@ -5,13 +5,13 @@ const router = express.Router();
 const fs = require('fs');
 const con = require('../config/connect');
 const { extractToken, isBodyEmpty } = require('../Utils/General');
-const { InitDatabase } = require('../Utils/Tables');
+const initDatabase = require('../Utils/Tables');
 
 // Pilih atau Buat Tabel Services
 const SELECT = 'SELECT * FROM services';
 const CREATE = 'CREATE TABLE services (id INT AUTO_INCREMENT PRIMARY KEY,nama_service VARCHAR(255), file_upload VARCHAR(255), deskripsi VARCHAR(1000), status BOOLEAN, userid VARCHAR(255), tanggal VARCHAR(100) )';
 
-InitDatabase(con, SELECT, CREATE);
+initDatabase(con, SELECT, CREATE);
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {

@@ -26,6 +26,11 @@ app.get('/*', (req, res) => {
   res.json({ message: "Welcome to portal application." });
 })
 
+// API ROUTES
+app.use('/api/users', Users);
+app.use('/api/services', Services);
+
+
 var key = fs.readFileSync(__dirname + '/certs/selfsigned.key');
 var cert = fs.readFileSync(__dirname + '/certs/selfsigned.crt');
 var options = {
@@ -35,12 +40,7 @@ var options = {
 
 var server = https.createServer(options, app);
 
-// API ROUTES
-app.use('/api/users', Users);
-app.use('/api/services', Services);
-
-// port
-
+// PORT
 const port = process.env.PORT || 4000;
 
 // run the server 

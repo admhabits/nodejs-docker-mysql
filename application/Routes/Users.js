@@ -3,13 +3,13 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 const md5 = require('md5');
-const { InitDatabase } = require('../Utils/Tables');
+const initDatabase = require('../Utils/Tables');
 
 // Pilih atau Buat Tabel Services
 const SELECT = 'SELECT * FROM users';
 const CREATE = 'CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), password  VARCHAR(255), email VARCHAR(255) NOT NULL UNIQUE, userid VARCHAR(255) ) ';
 
-InitDatabase(con, SELECT, CREATE);
+initDatabase(con, SELECT, CREATE);
 
 const JwtPrivateSecrt = 'alamwibowo@ReactNodeMysql#PortalServices';
 
