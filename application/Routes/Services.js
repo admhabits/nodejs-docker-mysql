@@ -4,7 +4,6 @@ const multer = require('multer');
 const router = express.Router();
 const fs = require('fs');
 const con = require('../config/connect');
-const extractToken = require('../Utils/General');
 const initDatabase = require('../Utils/Tables');
 
 // Pilih atau Buat Tabel Services
@@ -12,6 +11,16 @@ const SELECT = 'SELECT * FROM services';
 const CREATE = 'CREATE TABLE services (id INT AUTO_INCREMENT PRIMARY KEY,nama_service VARCHAR(255), file_upload VARCHAR(255), deskripsi VARCHAR(1000), status BOOLEAN, userid VARCHAR(255), tanggal VARCHAR(100) )';
 
 initDatabase(con, SELECT, CREATE);
+
+//JWT Token Extractor
+function extractToken(req) {
+    if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+        return req.headers.authorization.split(' ')[1];
+    } else if (req.query && req.query.token) {
+        return req.query.token;
+    }
+    return null;
+}
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
