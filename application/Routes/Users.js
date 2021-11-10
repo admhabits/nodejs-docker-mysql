@@ -1,118 +1,15 @@
-const mysql = require('mysql');
+const con = require('../config/connect');
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const multer = require('multer');
 const router = express.Router();
 const md5 = require('md5');
+const { InitDatabase } = require('../Utils/Tables');
 
-// config data 
-const DB_NAME = require('../config/data').DB_NAME;
-const HOST = require('../config/data').HOST;
-const DB_SECRET = require('../config/data').DB_SECRET;
-const USER_NAME = require('../config/data').USER_NAME;
+// Pilih atau Buat Tabel Services
+const SELECT = 'SELECT * FROM users';
+const CREATE = 'CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), password  VARCHAR(255), email VARCHAR(255) NOT NULL UNIQUE, userid VARCHAR(255) ) ';
 
-
-// Connect To DB
-const con = mysql.createConnection({
-    host: HOST,
-    user: USER_NAME,
-    password: DB_SECRET,
-    database: DB_NAME,
-    connectionLimit: 50,
-    queueLImit: 50,
-    waitForConnection: true
-})
-
-con.connect(function (err) {
-    if (err) throw err;
-    console.log('Users Query Connected!');
-})
-
-con.on('error', () => console.log('err'))
-
-var del = con._protocol._delegateError;
-con._protocol._delegateError = function (err, sequence) {
-    if (err.fatal) {
-        console.trace('fatal error: ' + err.message);
-    }
-    return del.call(this, err, sequence);
-};
-
-function isEmpty(obj) {
-    for (var prop in obj) {
-        if (obj.hasOwnProperty(prop))
-            return false;
-    }
-    return JSON.stringify(obj) === JSON.stringify({});
-}
-
-// MIME TYPE FILE SETTINGS
-
-const MIME_TYPE_MAP = {
-    "image/png": 'png',
-    "image/jpg": 'jpg',
-    "image/jpeg": 'jpeg'
-};
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const isValid = MIME_TYPE_MAP[file.mimetype];
-        let error = new Error("Invalid Mime Type !");
-        if (isValid) { error = null; }
-        cb(error, " ektensi gambar !");
-    }, filename: (req, file, cb) => {
-        const name = file.originalname
-            .toLowerCase()
-            .split(" ")
-            .join("-");
-
-        const ext = MIME_TYPE_MAP[file.mimetype];
-        cb(null, name + "-" + Date.now() + "." + ext)
-    }
-})
-
-// Select or Create the Users table & Services Table
-
-function SelectOrCreateTable() {
-
-    // con.query('SELECT * FROM services', function (err, result, fields) {
-    //     if (err) {
-    //         const sql = 'CREATE TABLE services (id INT AUTO_INCREMENT PRIMARY KEY,nama VARCHAR(255), url VARCHAR(255),  deskripsi VARCHAR(255), status BOOLEAN, userid VARCHAR(255) ) ';
-    //         con.query(sql, function (err, result) {
-    //             if (err) throw err;
-    //         });
-    //     }
-    // })
-
-    con.query('SELECT * FROM users', function (err, result, fields) {
-        if (err) {
-            const sql = 'CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY,username VARCHAR(255), password  VARCHAR(255), email  VARCHAR(255) Not Null UNIQUE, userid VARCHAR(255) ) ';
-            con.query(sql, function (err, result) {
-                if (err) throw err;
-            });
-        }
-    })
-
-    // con.query('SELECT * FROM vpn', function (err, result, fields) {
-    //     if (err) {
-    //         const sql = 'CREATE TABLE vpn (id INT AUTO_INCREMENT PRIMARY KEY, nama  VARCHAR(150), status BOOLEAN, url VARCHAR(255), userid VARCHAR(255) ) ';
-    //         con.query(sql, function (err, result) {
-    //             if (err) throw err;
-    //         });
-    //     }
-    // })
-
-    // con.query('SELECT * FROM tema', function (err, result, fields) {
-    //     if (err) {
-    //         const sql = 'CREATE TABLE tema (id INT AUTO_INCREMENT PRIMARY KEY, header  VARCHAR(150), footer VARCHAR(255), logo VARCHAR(255), userid VARCHAR(255) ) ';
-    //         con.query(sql, function (err, result) {
-    //             if (err) throw err;
-    //         });
-    //     }
-    // })
-}
-
-SelectOrCreateTable();
+InitDatabase(con, SELECT, CREATE);
 
 const JwtPrivateSecrt = 'alamwibowo@ReactNodeMysql#PortalServices';
 
@@ -142,12 +39,12 @@ router.post('/login', async (req, res) => {
         if (username) {
             jwt.sign({ username: username, userid: userid }, JwtPrivateSecrt,
                 (err, token) => {
-                    res.status(200).send({ token: token, message: "Token U Generated!" });
+                    res.status(200).send({ token: token, message: "Token User Generated!" });
                 });
         } else if (email) {
             jwt.sign({ email: email, userid: userid }, JwtPrivateSecrt,
                 (err, token) => {
-                    res.status(200).send({ token: token, message: "Token E Generated!" });
+                    res.status(200).send({ token: token, message: "Token Email Generated!" });
                 });
         }
     }

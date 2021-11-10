@@ -1,86 +1,21 @@
-const mysql = require('mysql');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const router = express.Router();
 const fs = require('fs');
+const con = require('../config/connect');
+const { extractToken, isBodyEmpty } = require('../Utils/General');
+const { InitDatabase } = require('../Utils/Tables');
 
-// Data Configuration
-const DB_NAME = require('../config/data').DB_NAME;
-const HOST = require('../config/data').HOST;
-const DB_SECRET = require('../config/data').DB_SECRET;
-const USER_NAME = require('../config/data').USER_NAME;
+// Pilih atau Buat Tabel Services
+const SELECT = 'SELECT * FROM services';
+const CREATE = 'CREATE TABLE services (id INT AUTO_INCREMENT PRIMARY KEY,nama_service VARCHAR(255), file_upload VARCHAR(255), deskripsi VARCHAR(1000), status BOOLEAN, userid VARCHAR(255), tanggal VARCHAR(100) )';
 
-// Database Connection
-const con = mysql.createConnection({
-    host: HOST,
-    user: USER_NAME,
-    password: DB_SECRET,
-    database: DB_NAME,
-    connectionLimit: 50,
-    queueLImit: 50,
-    waitForConnection: true
-})
-
-con.connect(function (err) {
-    if (err) throw err;
-    console.log('Services Query Connected!');
-
-})
-
-con.on('error', () => console.log('err'))
-
-var del = con._protocol._delegateError;
-con._protocol._delegateError = function (err, sequence) {
-    if (err.fatal) {
-        console.trace('fatal error: ' + err.message);
-    }
-    return del.call(this, err, sequence);
-};
-
-
-// Pilih atau Buat Tabel User & Services
-
-function SelectOrCreateTable() {
-
-    con.query('SELECT * FROM services', function (err, result, fields) {
-        if (err) {
-            const sql = 'CREATE TABLE services (id INT AUTO_INCREMENT PRIMARY KEY,nama_service VARCHAR(255), file_upload VARCHAR(255),  deskripsi VARCHAR(1000), status BOOLEAN, userid VARCHAR(255), tanggal VARCHAR(100) ) ';
-            con.query(sql, function (err, result) {
-                if (err) throw err;
-            });
-        }
-    })
-}
-
-SelectOrCreateTable();
-
-const JwtPrivateSecrt = 'alamwibowo@ReactNodeMysql#PortalServices';
-
-//JWT Token Extractor
-function extractToken(req) {
-    if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
-        return req.headers.authorization.split(' ')[1];
-    } else if (req.query && req.query.token) {
-        return req.query.token;
-    }
-    return null;
-}
-
-// Pengaturan Jenis Tipe Gambar
-const MIME_TYPE_MAP = {
-    "application/vnd.curl.car": 'car',
-    "image/png": 'png',
-    "image/jpg": 'jpg',
-    "image/jpeg": 'jpeg'
-};
+InitDatabase(con, SELECT, CREATE);
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const isValid = MIME_TYPE_MAP[file.mimetype];
-        let error = new Error("Invalid Mime Type !");
-        if (isValid) { error = null; }
-        cb(error, "carfile");
+        cb(null, "carfile");
     }, filename: (req, file, cb) => {
         const name = file.originalname
             .toLowerCase()
@@ -88,10 +23,10 @@ const storage = multer.diskStorage({
             .join("-");
 
         const ext = MIME_TYPE_MAP[file.mimetype];
-        cb(null, name + "-" + Date.now() + "." + ext)
+        // console.log(ext);
+        cb(null, name + "-" + Date.now() + "." + 'car')
     }
 })
-
 
 const upload = multer({
     storage: storage,
@@ -100,7 +35,84 @@ const upload = multer({
     }
 }).single("file");
 
+// CREATE SERVICES
+router.post('/create', upload, async (req, res, next) => {
+    console.log(req.body);
+    console.log(req.file);
+    const Token = extractToken(req);
+    const status = 0; // Disable Status Service
+    var decoded = jwt.decode(Token, { complete: true });
+    const userid = decoded.payload.userid;
+    const tanggal = new Date().toLocaleDateString();
+    const nama = req.body.nama;
+    const deskripsi = req.body.deskripsi;
 
+    if (!Token) {
+        res.status(404).send({ message: "Authorization token is required" })
+    }
+    if (!nama && !deskripsi && !req.file.path) {
+        res.status(500).send({ message: "Invalid body payload request" })
+    } else if (!nama || !deskripsi || !req.file.path) {
+        res.status(500).send({ message: "Missing body payload request" })
+    } else {
+        console.log(Token);
+        //GANTI METODE USER LOGIN
+        var userAccount;
+
+        if (req.body.username) {
+            userAccount = decoded.payload.username;
+        } else {
+            userAccount = decoded.payload.email;
+        }
+
+        con.query(`SELECT userid FROM users WHERE email = '${userAccount}' OR username = '${userAccount}'`,
+            function (err, result) {
+                if (err) throw err;
+                if (result.length !== 0) {
+                    buatService(result);
+                }
+            }
+
+        )
+
+        function buatService(rows) {
+            // Ambil UserID Setelah Menjalankan Query
+            const row = Object.values(JSON.parse(JSON.stringify(rows)));
+            const userID = row[0].userid;
+
+            let namaFile = `services-${userid}.car`;
+            const URL = req.protocol + "://" + req.get("host");
+            let fileURL = URL + "/carfile/" + namaFile;
+
+            // fs.renameSync(req.file.path, req.file.path.replace(req.file.filename, namaFile));
+            console.log("GET TOKEN FROM BEARER : ", decoded);
+            console.log("START create STATUS SERVICE WITH : " + status);
+            console.log("FILE URI : " + fileURL + "\n");
+
+            con.query(`INSERT INTO services (nama_service, file_upload, deskripsi, status, userid, tanggal) VALUES ('${nama}', '${fileURL}', '${deskripsi}', '${status}', '${userid}', '${tanggal}')`,
+                function (err, result) {
+                    if (err) throw err;
+                    renameFile(result.insertId);
+                })
+
+            function renameFile(insertId) {
+                namaFile = `services-${userid}-${insertId}.car`;
+                const newURL = URL + "/carfile/" + namaFile;
+                fs.renameSync(req.file.path, req.file.path.replace(req.file.filename, namaFile));
+                con.query(`UPDATE services SET file_upload = '${newURL}' WHERE id = ${insertId}`, function (err, result) {
+                    if (err) throw err;
+                    res.status(200).send({
+                        result,
+                        message: 'success'
+                    })
+                });
+            }
+        }
+    }
+
+})
+
+// GET ALL LIST SERVICES
 router.patch('/getservices', async (req, res) => {
     const Token = extractToken(req);
     if (req.body.type === 'services') {
@@ -188,11 +200,6 @@ router.post('/update/:id', upload, async (req, res, next) => {
         const URL = req.protocol + "://" + req.get("host");
 
         const fileURL = URL + "/carfile/" + buatFileName;
-        // if(!req.file){
-        //     res.status(404).send({message: "File is required !"});
-        //     fs.renameSync(req.file.path, req.file.path.replace(req.file.filename, buatFileName));
-        // }
-
         const status = 0;
         const tanggal = new Date().toLocaleDateString().toString();
 
@@ -262,15 +269,7 @@ router.post('/update/:id', upload, async (req, res, next) => {
 
 })
 
-
-/* UPDATE SERVICE BY STATUS as TRUE (ADMIN)
-==================================================
-PLANNING NOTES USER PRIVILLEDGE :
-    1. ROLE 234 => ADMIN
-    2. ROLE 123 => REGULER USER
-==================================================
-*/
-
+// UPDATE STATUS BY ID
 router.post('/update/status/:id', async (req, res, next) => {
     const Token = extractToken(req);
     var decoded = jwt.decode(Token, { complete: true });
@@ -343,7 +342,6 @@ router.post('/update/status/:id', async (req, res, next) => {
     }
 })
 
-
 // DELETE SERVICE BY ID
 router.post('/delete/:id', async (req, res, next) => {
     const Token = extractToken(req);
@@ -398,85 +396,6 @@ router.post('/delete/:id', async (req, res, next) => {
         })
     }
 })
-
-// CREATE SERVICES
-router.post('/create', upload, async (req, res, next) => {
-    console.log(req.body);
-    console.log(req.file);
-    const Token = extractToken(req);
-    const status = 0; // Disable Status Service
-    var decoded = jwt.decode(Token, { complete: true });
-    const userid = decoded.payload.userid;
-    const tanggal = new Date().toLocaleDateString();
-    const nama = req.body.nama;
-    const deskripsi = req.body.deskripsi;
-
-    if (!Token) {
-        res.status(404).send({ message: "Authorization token is required" })
-    }
-    if (!nama && !deskripsi && !req.file.path) {
-        res.status(500).send({ message: "Invalid body payload request" })
-    } else if (!nama || !deskripsi || !req.file.path) {
-        res.status(500).send({ message: "Missing body payload request" })
-    } else {
-        console.log(Token);
-        //GANTI METODE USER LOGIN
-        var userAccount;
-
-        if (req.body.username) {
-            userAccount = decoded.payload.username;
-        } else {
-            userAccount = decoded.payload.email;
-        }
-
-        con.query(`SELECT userid FROM users WHERE email = '${userAccount}' OR username = '${userAccount}'`,
-            function (err, result) {
-                if (err) throw err;
-                if (result.length !== 0) {
-                    buatService(result);
-                }
-            }
-
-        )
-
-        function buatService(rows) {
-            // Ambil UserID Setelah Menjalankan Query
-            const row = Object.values(JSON.parse(JSON.stringify(rows)));
-            const userID = row[0].userid;
-
-            let namaFile = `services-${userid}.car`;
-            const URL = req.protocol + "://" + req.get("host");
-            let fileURL = URL + "/carfile/" + namaFile;
-
-            // fs.renameSync(req.file.path, req.file.path.replace(req.file.filename, namaFile));
-            console.log("GET TOKEN FROM BEARER : ", decoded);
-            console.log("START create STATUS SERVICE WITH : " + status);
-            console.log("FILE URI : " + fileURL + "\n");
-
-            con.query(`INSERT INTO services (nama_service, file_upload, deskripsi, status, userid, tanggal) VALUES ('${nama}', '${fileURL}', '${deskripsi}', '${status}', '${userid}', '${tanggal}')`,
-                function (err, result) {
-                    if (err) throw err;
-                    renameFile(result.insertId);
-                })
-
-            function renameFile(insertId) {
-                namaFile = `services-${userid}-${insertId}.car`;
-                const newURL = URL + "/carfile/" + namaFile;
-                fs.renameSync(req.file.path, req.file.path.replace(req.file.filename, namaFile));
-                con.query(`UPDATE services SET file_upload = '${newURL}' WHERE id = ${insertId}`, function (err, result) {
-                    if (err) throw err;
-                    res.status(200).send({
-                        result,
-                        message: 'success'
-                    })
-                });
-            }
-        }
-    }
-
-})
-
-
 
 
 module.exports = router;

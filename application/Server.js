@@ -1,4 +1,3 @@
-const mysql = require('mysql');
 const express = require('express');
 const https = require('https');
 const fs = require('fs');
@@ -17,45 +16,6 @@ app.use(cors({ origin: '*' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-
-// config data 
-const DB_NAME = require('./config/data').DB_NAME;
-const HOST = require('./config/data').HOST;
-const DB_SECRET = require('./config/data').DB_SECRET;
-const USER_NAME = require('./config/data').USER_NAME;
-const PORT = require('./config/data').PORT;
-
-//end of
-
-
-// Connect To DB
-const con = mysql.createConnection({
-  host: HOST,
-  user: USER_NAME,
-  password: DB_SECRET,
-  // database:'app_react_node'
-  database: DB_NAME,
-  connectionLimit: 50,
-  queueLImit: 50,
-  waitForConnection: true
-})
-
-con.connect(function (err) {
-  if (err) throw err;
-  console.log('Server Connected!');
-
-})
-
-con.on('error', () => console.log('err'))
-
-var del = con._protocol._delegateError;
-con._protocol._delegateError = function (err, sequence) {
-  if (err.fatal) {
-    console.trace('fatal error: ' + err.message);
-  }
-  return del.call(this, err, sequence);
-};
-
 // this func allow users to visit this path 
 app.use('/images', express.static(path.join(__dirname, 'images')))
 app.use('/carfile', express.static(path.join(__dirname, 'carfile')))
@@ -66,8 +26,8 @@ app.get('/*', (req, res) => {
   res.json({ message: "Welcome to portal application." });
 })
 
-var key = fs.readFileSync(__dirname + '/cert/selfsigned.key');
-var cert = fs.readFileSync(__dirname + '/cert/selfsigned.crt');
+var key = fs.readFileSync(__dirname + '/certs/selfsigned.key');
+var cert = fs.readFileSync(__dirname + '/certs/selfsigned.crt');
 var options = {
   key: key,
   cert: cert
