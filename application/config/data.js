@@ -1,3 +1,5 @@
+// require('dotenv').config();
+
 module.exports = {
     HOST: 'mysqldb',
     DB_NAME:'api_portal',
