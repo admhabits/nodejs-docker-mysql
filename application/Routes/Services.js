@@ -30,8 +30,6 @@ const storage = multer.diskStorage({
             .toLowerCase()
             .split(" ")
             .join("-");
-
-        const ext = MIME_TYPE_MAP[file.mimetype];
         // console.log(ext);
         cb(null, name + "-" + Date.now() + "." + 'car')
     }
@@ -387,7 +385,7 @@ router.post('/delete/:id', async (req, res, next) => {
         const queryServices = `SELECT userid FROM services WHERE userid = '${userid}' AND id = ${id}`;
 
         // DELETE SERVICE QUERY
-        const updateServices = `DELETE FROM services WHERE userid = '${userid}' AND id = '${id}'`;
+        const DeleteQuery = `DELETE FROM services WHERE userid = '${userid}' AND id = '${id}'`;
 
         con.query(queryServices, function (err, result) {
             if (err) {
@@ -395,7 +393,9 @@ router.post('/delete/:id', async (req, res, next) => {
             }
             if (result.length !== 0) {
                 // Jika ada maka dihapus
-                con.query(updateServices, function (err, result) {
+                // const urlFIle = result[0];
+                console.log(result);
+                con.query(DeleteQuery, function (err, result) {
                     if (err) { throw err; }
                     res.status(200).send({ message: `Hapus service dengan id ${id}!` })
                 })
@@ -403,6 +403,15 @@ router.post('/delete/:id', async (req, res, next) => {
                 res.status(404).send({ message: `Service tidak ditemukan dengan id ${id}!` })
             }
         })
+    }
+
+    function hapusFile(path){
+        try {
+            fs.unlink(path)
+            //file removed
+          } catch(err) {
+            console.error(err)
+          }
     }
 })
 
