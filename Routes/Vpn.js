@@ -83,7 +83,7 @@ router.post('/create', checkReqBody, async (req, res, next) => {
 
     /* === CETAK NILAI BODY KEDALAM CONSOLE === */
     console.log(`Berikut nilai body yang dikirimn : \n`);
-    console.table([{ vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword }]);
+    console.table([{ vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword, userid}]);
 
     con.query(`SELECT * FROM vpn WHERE userid = '${userid}' AND username = '${username}'`, (err, rows) => {
         if (err) throw err;
@@ -98,12 +98,13 @@ router.post('/create', checkReqBody, async (req, res, next) => {
             var query2 = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}', '${vpnType}', '${credentialType}', '${username}', '${password}', '${groupName}', '${groupPassword}', '${userid}')`;
 
             if (!groupName && !groupName && vpnType == 2) {
+                console.log('Group Name && Group Password can not be empty!');
                 return res.status(405).json({
                     message: 'Group Name && Group Password can not be empty!',
                     status: false
                 })
             }
-            
+
             if (vpnType == 1) {
                 buatVpnService(query1);
             } else if (vpnType == 2) {
