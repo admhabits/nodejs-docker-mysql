@@ -3,23 +3,13 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 const md5 = require('md5');
+const initDatabase = require('../Utils/Tables');
 
 // Pilih atau Buat Tabel Services
 const SELECT = 'SELECT * FROM users';
 const CREATE = 'CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), password  VARCHAR(255), email VARCHAR(255) NOT NULL UNIQUE, userid VARCHAR(255) ) ';
 
-function SelectOrCreateTable() {
-
-    con.query(SELECT, function (err, result, fields) {
-        if (err) {
-            con.query(CREATE, function (err, result) {
-                if (err) throw err;
-            });
-        }
-    })
-}
-
-SelectOrCreateTable();
+initDatabase(con, SELECT, CREATE);
 
 const JwtPrivateSecrt = 'alamwibowo@ReactNodeMysql#PortalServices';
 
@@ -44,6 +34,8 @@ router.post('/login', async (req, res) => {
         const result = Object.values(JSON.parse(JSON.stringify(rows)));
         const userid = result[0].userid;
         console.log("Get ID in CREATE TOKEN LOGIN : " + result[0].userid);
+
+
         if (username) {
             jwt.sign({ username: username, userid: userid }, JwtPrivateSecrt,
                 (err, token) => {
