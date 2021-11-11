@@ -102,6 +102,12 @@ router.post('/create', checkReqBody, async (req, res, next) => {
                     message: 'Group Name && Group Password can not be empty!',
                     status: false
                 })
+            } else if(groupName && groupName && vpnType == 1){
+                console.log('Group Name && Group Password must be empty!');
+                return res.status(405).json({
+                    message: 'Group Name && Group Password must be empty!',
+                    status: false
+                })
             }
 
             if (vpnType == 1) {
