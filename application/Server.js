@@ -8,7 +8,7 @@ const path = require('path');
 const Users = require('./Routes/Users');
 const Services = require('./Routes/Services');
 // const Tema = require('./Routes/Tema');
-// const Vpn = require('./Routes/Vpn');
+const Vpn = require('./Routes/Vpn');
 
 const app = express();
 
@@ -29,6 +29,7 @@ app.get('/*', (req, res) => {
 // API ROUTES
 app.use('/api/users', Users);
 app.use('/api/services', Services);
+app.use('/api/vpn', Vpn);
 
 
 var key = fs.readFileSync(__dirname + '/certs/selfsigned.key');
