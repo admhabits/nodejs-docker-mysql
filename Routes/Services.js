@@ -32,9 +32,15 @@ function extractToken(req) {
     return null;
 }
 
+var dir = './carfile';
+if (!fs.existsSync(dir)) {
+    console.log("Buat directory /carfile");
+    fs.mkdirSync(dir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, "carfile");
+        cb(null, "./carfile");
     }, filename: (req, file, cb) => {
         const name = file.originalname
             .toLowerCase()
@@ -406,7 +412,7 @@ router.post('/delete/:id', async (req, res, next) => {
                 console.log("RESULT", + result);
                 const dirFile = `carfile/services-${userid}-${id}.car`;
                 console.log("GET DIRECTORY FILE : " + dirFile);
-                
+
                 con.query(DeleteQuery, function (err, result) {
                     if (err) { throw err; }
                     //File Hapus
