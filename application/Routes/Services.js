@@ -4,13 +4,23 @@ const multer = require('multer');
 const router = express.Router();
 const fs = require('fs');
 const con = require('../config/connect');
-const initDatabase = require('../Utils/Tables');
 
 // Pilih atau Buat Tabel Services
 const SELECT = 'SELECT * FROM services';
 const CREATE = 'CREATE TABLE services (id INT AUTO_INCREMENT PRIMARY KEY,nama_service VARCHAR(255), file_upload VARCHAR(255), deskripsi VARCHAR(1000), status BOOLEAN, userid VARCHAR(255), tanggal VARCHAR(100) )';
 
-initDatabase(con, SELECT, CREATE);
+function SelectOrCreateTable() {
+
+    con.query(SELECT, function (err, result, fields) {
+        if (err) {
+            con.query(CREATE, function (err, result) {
+                if (err) throw err;
+            });
+        }
+    })
+}
+
+SelectOrCreateTable();
 
 //JWT Token Extractor
 function extractToken(req) {
@@ -22,9 +32,15 @@ function extractToken(req) {
     return null;
 }
 
+var dir = './carfile';
+if (!fs.existsSync(dir)) {
+    console.log("Buat directory /carfile");
+    fs.mkdirSync(dir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, "carfile");
+        cb(null, "./carfile");
     }, filename: (req, file, cb) => {
         const name = file.originalname
             .toLowerCase()
@@ -396,7 +412,7 @@ router.post('/delete/:id', async (req, res, next) => {
                 console.log("RESULT", + result);
                 const dirFile = `carfile/services-${userid}-${id}.car`;
                 console.log("GET DIRECTORY FILE : " + dirFile);
-                
+
                 con.query(DeleteQuery, function (err, result) {
                     if (err) { throw err; }
                     //File Hapus
