@@ -44,7 +44,7 @@ function extractToken(req) {
 }
 
 // CREATE VPN
-const checkReqBody = [
+const createBodyRequest = [
     body('vpnName').notEmpty(),
     body('ipVpnServer').notEmpty(),
     body('domainVpnServer').notEmpty(),
@@ -56,8 +56,9 @@ const checkReqBody = [
     body('groupPassword').optional()
 ];
 
-router.post('/create', checkReqBody, async (req, res, next) => {
 
+// CREATE VPN
+router.post('/create', createBodyRequest, async (req, res, next) => {
     var Token, decoded, userid;
     if (req.headers.authorization) {
         Token = extractToken(req);
@@ -82,7 +83,7 @@ router.post('/create', checkReqBody, async (req, res, next) => {
 
     /* === CETAK NILAI BODY KEDALAM CONSOLE === */
     console.log(`Berikut nilai body yang dikirimn : \n`);
-    console.table([{ vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword, userid}]);
+    console.table([{ vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword, userid }]);
 
     con.query(`SELECT * FROM vpn WHERE userid = '${userid}' AND username = '${username}'`, (err, rows) => {
         if (err) throw err;
@@ -102,7 +103,7 @@ router.post('/create', checkReqBody, async (req, res, next) => {
                     message: 'Group Name && Group Password can not be empty!',
                     status: false
                 })
-            } else if(groupName && groupName && vpnType == 1){
+            } else if (groupName && groupName && vpnType == 1) {
                 console.log('Group Name && Group Password must be empty!');
                 return res.status(405).json({
                     message: 'Group Name && Group Password must be empty!',
@@ -130,11 +131,121 @@ router.post('/create', checkReqBody, async (req, res, next) => {
                 res.status(201).send({
                     status: true,
                     message: 'Vpn berhasil dibuat!',
-                    data: rows[0]
+                    result: rows[0]
                 })
             }
         })
     };
+
+})
+
+const getVpnBodyRequest = [
+    body('type').isString().notEmpty()
+];
+
+//GET VPN BY ID
+router.patch('/getvpnbyid', getVpnBodyRequest, (req, res, next) => {
+    var Token, decoded, userid;
+
+    /* === CHECK HEADERS AUTHORIZATION === */
+    if (req.headers.authorization) {
+        Token = extractToken(req);
+        decoded = jwt.decode(Token, { complete: true });
+        userid = decoded.payload.userid;
+    } else {
+        return res.status(500).send({
+            status: false,
+            message: 'Headers authorization is required!'
+        })
+    }
+
+    /* === CHECK BODY VALIDATION === */
+    const errors = validationResult(req);
+    console.log(`APAKAH ARRAY OBJECT ERROR KOSONG ? ${errors.isEmpty()}`, errors); // ;
+    const { type, id } = req.body;
+    console.table([{ type, id }])
+
+    if (!errors.isEmpty()) {
+        res.status(500).send({
+            errors: errors.array()
+        });
+    } else if (req.body.type == 'vpn') {
+        const id = req.body.id;
+        con.query(`SELECT * FROM vpn WHERE id = '${id}' AND userid = '${userid}'`, (err, rows) => {
+            if (err) throw err;
+            if (rows.length !== 0) {
+                return res.status(200).send({
+                    status: true,
+                    result: rows[0],
+                    message: `success fetching vpn with id ${id}`,
+                })
+            } else {
+                return res.status(500).json({
+                    status: false,
+                    message: 'Tidak ditemukan data!',
+                })
+            }
+        })
+    } else {
+        return res.status(500).json({
+            status: false,
+            message: 'Invalid type body request!'
+        })
+    }
+
+
+})
+
+//GET VPN BY ID
+router.patch('/getvpns', getVpnBodyRequest, (req, res, next) => {
+    var Token, decoded, userid;
+
+    /* === CHECK HEADERS AUTHORIZATION === */
+    if (req.headers.authorization) {
+        Token = extractToken(req);
+        decoded = jwt.decode(Token, { complete: true });
+        userid = decoded.payload.userid;
+    } else {
+        return res.status(500).send({
+            status: false,
+            message: 'Headers authorization is required!'
+        })
+    }
+
+    /* === CHECK BODY VALIDATION === */
+    const errors = validationResult(req);
+    console.log(`APAKAH ARRAY OBJECT ERROR KOSONG ? ${errors.isEmpty()}`, errors); // ;
+    const { type } = req.body;
+    console.table([{ type }])
+
+    if (!errors.isEmpty()) {
+        res.status(500).send({
+            errors: errors.array()
+        });
+    } else if (req.body.type == 'vpn') {
+        const id = req.body.id;
+        con.query(`SELECT * FROM vpn WHERE userid = '${userid}' ORDER BY id desc`, (err, rows) => {
+            if (err) throw err;
+            if (rows.length !== 0) {
+                return res.status(200).send({
+                    status: true,
+                    result: rows[0],
+                    message: `success fetching vpn with id ${id}`,
+                })
+            } else {
+                return res.status(500).json({
+                    status: false,
+                    message: 'Tidak ditemukan data!',
+                })
+            }
+        })
+    } else {
+        return res.status(500).json({
+            status: false,
+            message: 'Invalid type body request!'
+        })
+    }
+
 
 })
 
