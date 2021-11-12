@@ -92,91 +92,91 @@ const upload = multer({
 
 
 // CREATE VPN TIPE 1
-// router.post('/create', createBodyRequest, async (req, res, next) => {
-//     var Token, decoded, userid;
-//     if (req.headers.authorization) {
-//         Token = extractToken(req);
-//         decoded = jwt.decode(Token, { complete: true });
-//         userid = decoded.payload.userid;
-//     } else {
-//         return res.status(500).send({
-//             status: false,
-//             message: 'Authorization is required !'
-//         })
-//     }
+router.post('/create', createBodyRequest, async (req, res, next) => {
+    var Token, decoded, userid;
+    if (req.headers.authorization) {
+        Token = extractToken(req);
+        decoded = jwt.decode(Token, { complete: true });
+        userid = decoded.payload.userid;
+    } else {
+        return res.status(500).send({
+            status: false,
+            message: 'Authorization is required !'
+        })
+    }
 
-//     /* === VALIDASI BODY REQ == */
-//     const errors = validationResult(req);
-//     console.log(`APAKAH ARRAY OBJECT ERROR KOSONG ? ${errors.isEmpty()}`, errors); // ;
-//     if (!errors.isEmpty()) {
-//         res.status(422).send({
-//             errors: errors.array(),
-//         });
-//     } else {
-//         const { vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword } = req.body;
+    /* === VALIDASI BODY REQ == */
+    const errors = validationResult(req);
+    console.log(`APAKAH ARRAY OBJECT ERROR KOSONG ? ${errors.isEmpty()}`, errors); // ;
+    if (!errors.isEmpty()) {
+        res.status(422).send({
+            errors: errors.array(),
+        });
+    } else {
+        const { vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword } = req.body;
 
-//         /* === CETAK NILAI BODY KEDALAM CONSOLE === */
-//         console.log(`Berikut nilai body yang dikirimn : \n`);
-//         console.table([{ vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword, userid }]);
+        /* === CETAK NILAI BODY KEDALAM CONSOLE === */
+        console.log(`Berikut nilai body yang dikirimn : \n`);
+        console.table([{ vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword, userid }]);
 
-//         con.query(`SELECT * FROM vpn WHERE userid = '${userid}' AND username = '${username}'`, (err, rows) => {
-//             if (err) throw err;
-//             if (rows.length !== 0) {
-//                 console.log(`vpn username ${username} telah digunakan!`);
-//                 res.send({
-//                     message: `vpn username ${username} telah digunakan!`,
-//                     status: false
-//                 });
-//             } else {
-//                 var query;
-//                   var query1 = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}',' ${vpnType}', '${credentialType}', '${username}', '${md5(password)}', '${userid}')`;
-//                   var query2 = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}', '${vpnType}', '${credentialType}', '${username}', '${md5(password)}', '${groupName}', '${md5(groupPassword)}', '${userid}')`;
-//                   var query3 = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, userCertificate, serverCertificate, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}', '${vpnType}', '${credentialType}', '${null}', '${null}', '${userid}')`;
+        con.query(`SELECT * FROM vpn WHERE userid = '${userid}' AND username = '${username}'`, (err, rows) => {
+            if (err) throw err;
+            if (rows.length !== 0) {
+                console.log(`vpn username ${username} telah digunakan!`);
+                res.send({
+                    message: `vpn username ${username} telah digunakan!`,
+                    status: false
+                });
+            } else {
+                var query;
+                  var query1 = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}',' ${vpnType}', '${credentialType}', '${username}', '${md5(password)}', '${userid}')`;
+                  var query2 = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}', '${vpnType}', '${credentialType}', '${username}', '${md5(password)}', '${groupName}', '${md5(groupPassword)}', '${userid}')`;
+                  var query3 = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, userCertificate, serverCertificate, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}', '${vpnType}', '${credentialType}', '${null}', '${null}', '${userid}')`;
 
-//                 if (!groupName && !groupPassword && vpnType == 2) {
-//                     console.log('Body request groupName && groupPassword can not be empty!');
-//                     return res.status(405).json({
-//                         message: 'Body request groupName && groupPassword can not be empty!',
-//                         status: false
-//                     })
-//                 } else if (groupName && groupPassword && vpnType == 1) {
-//                     console.log('Body request groupName && groupPassword must be empty!');
-//                     return res.status(405).json({
-//                         message: 'Body request groupName && groupPassword must be empty!',
-//                         status: false
-//                     })
-//                 }
+                if (!groupName && !groupPassword && vpnType == 2) {
+                    console.log('Body request groupName && groupPassword can not be empty!');
+                    return res.status(405).json({
+                        message: 'Body request groupName && groupPassword can not be empty!',
+                        status: false
+                    })
+                } else if (groupName && groupPassword && vpnType == 1) {
+                    console.log('Body request groupName && groupPassword must be empty!');
+                    return res.status(405).json({
+                        message: 'Body request groupName && groupPassword must be empty!',
+                        status: false
+                    })
+                }
 
-//                 if (vpnType == 1 && credentialType == 'basic') {
-//                     buatVpnService(query1);
-//                 } else if (vpnType == 2 && credentialType == 'group') {
-//                     buatVpnService(query2);
-//                 } else if (vpnType == 3 && credentialType == 'certificate') {
-//                     buatVpnService(query3);
-//                 } else if (vpnType != 1 || vpnType != 2 || vpnType != 3) {
-//                     return res.status(500).json({
-//                         message: 'Invalid vpnType or credentialType!',
-//                         status: false
-//                     })
-//                 }
-//             }
-//         })
+                if (vpnType == 1 && credentialType == 'basic') {
+                    buatVpnService(query1);
+                } else if (vpnType == 2 && credentialType == 'group') {
+                    buatVpnService(query2);
+                } else if (vpnType == 3 && credentialType == 'certificate') {
+                    buatVpnService(query3);
+                } else if (vpnType != 1 || vpnType != 2 || vpnType != 3) {
+                    return res.status(500).json({
+                        message: 'Invalid vpnType or credentialType!',
+                        status: false
+                    })
+                }
+            }
+        })
 
-//         const buatVpnService = (query) => {
-//             con.query(query, async (err, rows) => {
-//                 if (err) throw err;
-//                 if (rows.length !== 0) {
-//                     res.status(201).send({
-//                         status: true,
-//                         message: 'Vpn berhasil dibuat!',
-//                         result: rows[0]
-//                     })
-//                 }
-//             })
-//         };
+        const buatVpnService = (query) => {
+            con.query(query, async (err, rows) => {
+                if (err) throw err;
+                if (rows.length !== 0) {
+                    res.status(201).send({
+                        status: true,
+                        message: 'Vpn berhasil dibuat!',
+                        result: rows[0]
+                    })
+                }
+            })
+        };
 
-//     }
-// })
+    }
+})
 
 
 router.post('/create/one', createBodyRequest, async (req, res, next) => {
@@ -632,8 +632,6 @@ router.patch('/getvpns', getVpnBodyRequest, (req, res, next) => {
 
 
 })
-
-
 
 
 module.exports = router;

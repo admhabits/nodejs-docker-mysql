@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const router = express.Router();
 const fs = require('fs');
+const nodemailer = require('nodemailer');
 const con = require('../config/connect');
 
 // Pilih atau Buat Tabel Services
@@ -203,9 +204,9 @@ router.post('/update/:id', upload, async (req, res, next) => {
     if (!Token) {
         res.status(404).send({ info: "Authorization token is required", code: 404, status: 'error' })
     }
-    if (!nama && !deskripsi && !req.file) {
+    if (!nama && !deskripsi) {
         res.status(500).send({ info: "Invalid body payload request", code: 500, status: 'error' })
-    } else if (nama && deskripsi && req.file) {
+    } else if (nama && deskripsi && !req.files) {
         // console.log(Token);
         var decoded = jwt.decode(Token, { complete: true });
 
@@ -303,6 +304,32 @@ router.post('/update/status/:id', async (req, res, next) => {
     let email = decoded.payload.email;
     console.log("GET status FROM QUERY PARAMS : " + status);
 
+    // SETTING NODEMAILER
+
+    /* Step 1 */
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: 'admhabits@gmail.com',
+            pass: 'akunku01'
+        }
+
+    })
+
+    // Step 2
+
+    const mailOptions = {
+        from: 'Alam Wibowo',
+        to: email,
+        subject: 'Test Email',
+        text: 'Hello test service api'
+    }
+
+    /* Step 3 */
+
+
+
+
 
     if (!email) {
         email = decoded.payload.username;
@@ -358,6 +385,12 @@ router.post('/update/status/:id', async (req, res, next) => {
                     }
                     res.status(200).send({ message: `Status service updated with id ${id} & active is ${status}!`, code: 200 })
                 })
+
+                transporter.sendMail(mailOptions, function(err, data){
+                    if(err) throw err;
+                    console.log("email sent!")
+                })
+            
             } else {
                 res.status(404).send({ message: `Services tidak ditemukan dengan id ${id}!` })
             }
