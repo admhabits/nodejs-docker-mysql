@@ -3,7 +3,9 @@ const router = express.Router();
 const fs = require('fs');
 const con = require('../config/connect');
 const jwt = require('jsonwebtoken');
+const md5 = require('md5');
 const { body, validationResult } = require('express-validator');
+const e = require('express');
 
 // Pilih atau Buat Tabel Services
 const SELECT = 'SELECT * FROM vpn';
@@ -12,12 +14,14 @@ const CREATE = `CREATE TABLE vpn (
                     vpnName VARCHAR(255), 
                     ipVpnServer VARCHAR(255), 
                     domainVpnServer VARCHAR(255),
-                    vpnType VARCHAR(255), 
-                    credentialType VARCHAR(255),
+                    vpnType ENUM('1', '2'), 
+                    credentialType ENUM('group', 'certificate', 'basic'),
                     username VARCHAR(255),
                     password VARCHAR(255),
                     groupName VARCHAR(255),
                     groupPassword VARCHAR(255),
+                    userCertificate BLOB,
+                    serverCertificate BLOB,
                     userid VARCHAR(255)
                 )`;
 
@@ -55,6 +59,15 @@ const createBodyRequest = [
     body('groupName').optional(),
     body('groupPassword').optional()
 ];
+
+// UPDATE VPN
+const UpdateBodyRequest = [
+    body('vpnName').notEmpty(),
+    body('ipVpnServer').notEmpty(),
+    body('domainVpnServer').notEmpty(),
+    body('credentialType').notEmpty()
+];
+
 
 
 // CREATE VPN
@@ -94,8 +107,8 @@ router.post('/create', createBodyRequest, async (req, res, next) => {
                 status: false
             });
         } else {
-            var query1 = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}',' ${vpnType}', '${credentialType}', '${username}', '${password}', '${userid}')`;
-            var query2 = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}', '${vpnType}', '${credentialType}', '${username}', '${password}', '${groupName}', '${groupPassword}', '${userid}')`;
+            var query1 = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}',' ${vpnType}', '${credentialType}', '${username}', '${md5(password)}', '${userid}')`;
+            var query2 = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}', '${vpnType}', '${credentialType}', '${username}', '${md5(password)}', '${groupName}', '${md5(groupPassword)}', '${userid}')`;
 
             if (!groupName && !groupName && vpnType == 2) {
                 console.log('Group Name && Group Password can not be empty!');
@@ -111,13 +124,13 @@ router.post('/create', createBodyRequest, async (req, res, next) => {
                 })
             }
 
-            if (vpnType == 1) {
+            if (vpnType == 1 && credentialType == 'basic' || credentialType == 'group' || credentialType == 'certificate') {
                 buatVpnService(query1);
-            } else if (vpnType == 2) {
+            } else if (vpnType == 2 && credentialType == 'basic' || credentialType == 'group' || credentialType == 'certificate') {
                 buatVpnService(query2);
             } else if (vpnType != 1 || vpnType != 2) {
                 return res.status(500).json({
-                    message: 'Invalid Type Vpn!',
+                    message: 'Invalid Type Vpn or Credential!',
                     status: false
                 })
             }
@@ -136,6 +149,76 @@ router.post('/create', createBodyRequest, async (req, res, next) => {
             }
         })
     };
+
+})
+
+
+//UPDATE VPN 
+router.post('/update/:id', UpdateBodyRequest, async (req, res, next) => {
+    var Token, decoded, userid;
+    const id = req.params.id;
+    if (req.headers.authorization) {
+        Token = extractToken(req);
+        decoded = jwt.decode(Token, { complete: true });
+        userid = decoded.payload.userid;
+    } else {
+        return res.status(500).send({
+            status: false,
+            message: 'Authorization is required !'
+        })
+    }
+
+    /* === VALIDASI BODY REQ == */
+    const errors = validationResult(req);
+    console.log(`APAKAH ARRAY OBJECT ERROR KOSONG ? ${errors.isEmpty()}`, errors); // ;
+    if (!errors.isEmpty()) {
+        res.status(422).send({
+            errors: errors.array(),
+        });
+    }
+    const { vpnName, ipVpnServer, domainVpnServer, credentialType } = req.body;
+
+    /* === CETAK NILAI BODY KEDALAM CONSOLE === */
+    console.log(`Berikut nilai body yang dikirimn : \n`);
+    console.table([{ vpnName, ipVpnServer, domainVpnServer, credentialType }]);
+
+    con.query(`SELECT * FROM vpn WHERE userid = '${userid}' AND id = '${id}'`, (err, rows) => {
+        if (err) throw err;
+        if (rows.length === 0) {
+            console.log(`Tidak ditemukan data!`);
+            res.send({
+                message: `data tidak ditemukan!`,
+                status: false
+            });
+        } else {
+            var query1 = `UPDATE vpn SET vpnName = '${vpnName}', ipVpnServer = '${ipVpnServer}', domainVpnServer = '${domainVpnServer}', credentialType = '${credentialType}' WHERE id = '${id}'`;
+            if(credentialType == 'basic' || credentialType == 'group' || credentialType == 'certificate'){
+                updateVPN(query1);
+            } else {
+                res.status(400).send({
+                    status: false,
+                    message: 'Invalid type credential!'
+                })
+            }
+           
+        }
+    })
+
+    const updateVPN = (query) => {
+        con.query(query, async (err, rows) => {
+            if (err) throw err;
+            if (rows.length !== 0) {
+                console.log("UPDATE VPN BERHASIL DENGAN ID : " + id)
+                console.table([rows]);
+                res.status(201).send({
+                    status: true,
+                    message: 'Vpn berhasil diupdate!',
+                    result: rows
+                })
+            }
+        })
+    };
+
 
 })
 
@@ -174,6 +257,8 @@ router.patch('/getvpnbyid', getVpnBodyRequest, (req, res, next) => {
         con.query(`SELECT * FROM vpn WHERE id = '${id}' AND userid = '${userid}'`, (err, rows) => {
             if (err) throw err;
             if (rows.length !== 0) {
+                console.log(`HASIL DATA DARI ID : ${id}`);
+                console.table([rows[0]]);
                 return res.status(200).send({
                     status: true,
                     result: rows[0],
@@ -196,7 +281,7 @@ router.patch('/getvpnbyid', getVpnBodyRequest, (req, res, next) => {
 
 })
 
-//GET VPN BY ID
+//GET VPN ALL
 router.patch('/getvpns', getVpnBodyRequest, (req, res, next) => {
     var Token, decoded, userid;
 
@@ -226,11 +311,13 @@ router.patch('/getvpns', getVpnBodyRequest, (req, res, next) => {
         const id = req.body.id;
         con.query(`SELECT * FROM vpn WHERE userid = '${userid}' ORDER BY id desc`, (err, rows) => {
             if (err) throw err;
+            console.log("SEMUA DATA LIST VPN : " + rows.length);
+            console.table(rows);
             if (rows.length !== 0) {
                 return res.status(200).send({
                     status: true,
-                    result: rows[0],
-                    message: `success fetching vpn with id ${id}`,
+                    result: rows,
+                    message: `success fetching vpn list`,
                 })
             } else {
                 return res.status(500).json({
@@ -248,6 +335,8 @@ router.patch('/getvpns', getVpnBodyRequest, (req, res, next) => {
 
 
 })
+
+
 
 
 module.exports = router;
