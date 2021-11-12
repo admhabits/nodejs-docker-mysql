@@ -15,7 +15,7 @@ const CREATE = `CREATE TABLE vpn (
                     vpnName VARCHAR(255), 
                     ipVpnServer VARCHAR(255), 
                     domainVpnServer VARCHAR(255),
-                    vpnType ENUM('1', '2'), 
+                    vpnType ENUM('1', '2', '3'), 
                     credentialType ENUM('group', 'certificate', 'basic'),
                     username VARCHAR(255),
                     password VARCHAR(255),
@@ -336,7 +336,7 @@ router.post('/create/three', createBodyRequest, async (req, res, next) => {
         console.log(`Berikut nilai body yang dikirim untuk membuat vpn ${credentialType} : \n`);
         console.table([{ vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, userCertificate, serverCertificate }]);
 
-        con.query(`SELECT * FROM vpn WHERE userid = '${userid}' AND username = '${username}'`, (err, rows) => {
+        con.query(`SELECT * FROM vpn WHERE userid = '${userid}' AND username = '${username} AND credentialType = ${credentialType}'`, (err, rows) => {
             if (err) throw err;
             if (rows.length !== 0) {
                 console.log(`vpn username ${username} telah digunakan!`);
@@ -346,7 +346,6 @@ router.post('/create/three', createBodyRequest, async (req, res, next) => {
                 });
             } else {
                 var query = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, userCertificate, serverCertificate, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}', '${vpnType}', '${credentialType}', '${userCertificate}', '${serverCertificate}', '${userid}')`;
-
 
                 if (vpnType == 3 && credentialType == 'certificate') {
                     buatVpnService(query);
