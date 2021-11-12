@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const router = express.Router();
 const fs = require('fs');
+require('dotenv').config();
 const nodemailer = require('nodemailer');
 const con = require('../config/connect');
 
@@ -306,35 +307,43 @@ router.post('/update/status/:id', async (req, res, next) => {
 
     // SETTING NODEMAILER
 
+    if (!email) {
+        email = decoded.payload.username;
+    }
+    const id = req.params.id;
+
+    const transporterSmtp = nodemailer.createTransport({
+        host: "smtp.ethereal.email",
+        port: 587,
+        secure: false, // upgrade later with STARTTLS
+        auth: {
+            user: "hadley.greenholt61@ethereal.email",
+            pass: "Y1RJavqrZMn8FSBrkR",
+        },
+    });
+
     /* Step 1 */
-    const transporter = nodemailer.createTransport({
+    const transporterGmail = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user: 'admhabits@gmail.com',
-            pass: 'akunku01'
+            user: process.env.EMAIL,
+            pass: process.env.PASS
         }
 
     })
 
     // Step 2
-
     const mailOptions = {
-        from: 'Alam Wibowo',
+        from: 'Integrasi Service Kominfo <no-reply@kominfo.go.id>',
         to: email,
-        subject: 'Test Email',
-        text: 'Hello test service api'
+        subject: `Aktivasi Layanan Aktif`,
+        text: 'Selamat integrasi layanan kamu telah aktif!'
     }
+
+
 
     /* Step 3 */
 
-
-
-
-
-    if (!email) {
-        email = decoded.payload.username;
-    }
-    const id = req.params.id;
 
     if (status === 'true') {
         status = 1;
@@ -382,15 +391,21 @@ router.post('/update/status/:id', async (req, res, next) => {
                         status = false;
                     } else {
                         status = true;
+                        transporterGmail.sendMail(mailOptions, function (err, data) {
+                            if (err) throw err;
+                            console.log(`\n Notifikasi service aktif Telah dikirim! ke ${email}`)
+                            console.table([{
+                                sender: process.env.EMAIL,
+                                penerima: email
+                            }])
+                            res.status(200).send({ message: `Status service updated with id ${id} & active is ${status}!`, code: 200, data })
+                        })
                     }
-                    res.status(200).send({ message: `Status service updated with id ${id} & active is ${status}!`, code: 200 })
+                    
                 })
 
-                transporter.sendMail(mailOptions, function(err, data){
-                    if(err) throw err;
-                    console.log("email sent!")
-                })
-            
+
+
             } else {
                 res.status(404).send({ message: `Services tidak ditemukan dengan id ${id}!` })
             }
