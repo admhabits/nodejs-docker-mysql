@@ -47,6 +47,12 @@ function extractToken(req) {
     return null;
 }
 
+/* ==== KETERANGAN ==== */
+/* VPN TYPE = 1 ====> PERLU 1 KALI AUTH */
+/* VPN TYPE = 2 ====> PERLU 2 KALI AUTH */
+/* CREDENTIAL TYPE ====>  ["basic", "group", "certificate"] */
+
+
 // CREATE VPN
 const createBodyRequest = [
     body('vpnName').notEmpty(),
@@ -67,7 +73,6 @@ const UpdateBodyRequest = [
     body('domainVpnServer').notEmpty(),
     body('credentialType').notEmpty()
 ];
-
 
 
 // CREATE VPN
@@ -153,7 +158,7 @@ router.post('/create', createBodyRequest, async (req, res, next) => {
 })
 
 
-//UPDATE VPN 
+//UPDATE VPN BY ID
 router.post('/update/:id', UpdateBodyRequest, async (req, res, next) => {
     var Token, decoded, userid;
     const id = req.params.id;
@@ -193,6 +198,76 @@ router.post('/update/:id', UpdateBodyRequest, async (req, res, next) => {
         } else {
             var query1 = `UPDATE vpn SET vpnName = '${vpnName}', ipVpnServer = '${ipVpnServer}', domainVpnServer = '${domainVpnServer}', credentialType = '${credentialType}' WHERE id = '${id}'`;
             if(credentialType == 'basic' || credentialType == 'group' || credentialType == 'certificate'){
+                updateVPN(query1);
+            } else {
+                res.status(400).send({
+                    status: false,
+                    message: 'Invalid type credential!'
+                })
+            }
+           
+        }
+    })
+
+    const updateVPN = (query) => {
+        con.query(query, async (err, rows) => {
+            if (err) throw err;
+            if (rows.length !== 0) {
+                console.log("UPDATE VPN BERHASIL DENGAN ID : " + id)
+                console.table([rows]);
+                res.status(201).send({
+                    status: true,
+                    message: 'Vpn berhasil diupdate!',
+                    result: rows
+                })
+            }
+        })
+    };
+
+
+})
+
+
+//UPDATE VPN CERTIFICATE BY ID
+router.post('/update/certificate/:id', async (req, res, next) => {
+    var Token, decoded, userid;
+    const id = req.params.id;
+    if (req.headers.authorization) {
+        Token = extractToken(req);
+        decoded = jwt.decode(Token, { complete: true });
+        userid = decoded.payload.userid;
+    } else {
+        return res.status(500).send({
+            status: false,
+            message: 'Authorization is required !'
+        })
+    }
+
+    /* === VALIDASI BODY REQ == */
+    // const errors = validationResult(req);
+    // console.log(`APAKAH ARRAY OBJECT ERROR KOSONG ? ${errors.isEmpty()}`, errors); // ;
+    // if (!errors.isEmpty()) {
+    //     res.status(422).send({
+    //         errors: errors.array(),
+    //     });
+    // }
+    const { userCertificate, serverCertificate } = req.file;
+
+    /* === CETAK NILAI BODY KEDALAM CONSOLE === */
+    // console.log(`Berikut nilai body yang dikirimn : \n`);
+    // console.table([{ vpnName, ipVpnServer, domainVpnServer, credentialType }]);
+
+    con.query(`SELECT * FROM vpn WHERE userid = '${userid}' AND id = '${id}'`, (err, rows) => {
+        if (err) throw err;
+        if (rows.length === 0) {
+            console.log(`Tidak ditemukan data!`);
+            res.send({
+                message: `data tidak ditemukan!`,
+                status: false
+            });
+        } else {
+            var query1 = `UPDATE vpn SET userCertificate = '${userCertificate}', serverCertificate = '${serverCertificate}' WHERE id = '${id}'`;
+            if(!credentialType && credentialType == 'certificate'){
                 updateVPN(query1);
             } else {
                 res.status(400).send({
