@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
+const path = require('path');
 const router = express.Router();
 const fs = require('fs');
 require('dotenv').config();
@@ -334,10 +335,10 @@ router.post('/update/status/:id', async (req, res, next) => {
 
     // Step 2
     const mailOptions = {
-        from: 'Integrasi Service Kominfo <no-reply@kominfo.go.id>',
+        from: `Pemberitahuan Integrasi Layanan <no-reply@kominfo.go.id>`,
         to: email,
         subject: `Aktivasi Layanan Aktif`,
-        text: 'Selamat integrasi layanan kamu telah aktif!'
+        html: fs.readFileSync(path.join(__dirname + '/email', 'notif.html')),
     }
 
 
