@@ -1,8 +1,7 @@
 const nodemailer = require('nodemailer');
 const cron = require('node-cron');
-const { pause } = require('../config/connect');
 
-const Email = () => {
+const Email = (req, res) => {
 
     const body = {
         "data": {
@@ -24,13 +23,19 @@ const Email = () => {
                 },
                 {
                     "email": "alamhafidz02@gmail.com"
+                },
+                {
+                    "email": "Fitrialam97@gmail.com"
+                },
+                {
+                    "email": "dwisuliwa0019@gmail.com"
                 }
             ],
             "waktuJeda": 5000,
-            "jadwal":"*/1 * * * *",
+            "jadwal":"46 16 * * *",
             "from": "Alam Santiko Wibowo <no-reply@alamhafidz61@gmail.com>",
-            "subject": "BELAJAR YUK NODEMAILER",
-            "html": "Selamat pagi guys!"
+            "subject": "Peringatan Sholat!",
+            "html": "Sudah sholat ashar belum ?"
         }
     };
 
@@ -41,8 +46,10 @@ const Email = () => {
     const from = body.data.from;
     const subject = body.data.subject
     const html = body.data.html
-
-    console.log(daftarEmail, waktuJeda, jadwal, from, subject, html);
+    console.log("INFORMASI PENGIRIMAN E-MAIL :")
+    console.table([{jadwal, from, subject, html}]);
+    console.table(daftarEmail);
+  
     if (!body) {
         res.status(400).send({
             message: 'Err',
@@ -57,7 +64,6 @@ const Email = () => {
             pass: process.env.PASS
         }
     })
-
 
     const kirimEmail = (jeda, data, from, subject, html) => {
         let interval = jeda;
@@ -96,13 +102,20 @@ const Email = () => {
         setInterval(kirimSemuaEmail, interval);
     }
 
-    // kirimEmail(waktuJeda, daftarEmail, from, subject, html);
+    /* === RUNNING CRON JOB ===  */
+    // cron.schedule(jadwal, () => {
+    //     // Send e-mail
+    //     console.log('1 menit kemudian');
+    //     kirimEmail(waktuJeda, daftarEmail, from, subject, html);
+    // });
 
     cron.schedule(jadwal, () => {
-        // Send e-mail
-        console.log('1 menit kemudian');
+        console.log('Running a job at 16.40 at Asia/Jakarta timezone');
         kirimEmail(waktuJeda, daftarEmail, from, subject, html);
-    });
+      }, {
+        scheduled: true,
+        timezone: "Asia/Jakarta"
+      });
     
 }
 
