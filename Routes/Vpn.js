@@ -6,7 +6,7 @@ const con = require('../config/connect');
 const jwt = require('jsonwebtoken');
 const md5 = require('md5');
 const { body, validationResult } = require('express-validator');
-const e = require('express');
+
 
 // Pilih atau Buat Tabel Services
 const SELECT = 'SELECT * FROM vpn';

@@ -3,6 +3,7 @@ const https = require('https');
 const fs = require('fs');
 const cors = require('cors');
 const path = require('path');
+const Email = require('./Utils/Email')
 
 // user
 const Users = require('./Routes/Users');
@@ -43,6 +44,8 @@ var server = https.createServer(options, app);
 
 // PORT
 const port = process.env.PORT || 4000;
+
+Email();
 
 // run the server 
 server.listen(port, () => console.log(`app listen on port ${port}`))
