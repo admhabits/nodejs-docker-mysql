@@ -92,7 +92,7 @@ const upload = multer({
 
 
 // CREATE VPN TIPE 1
-router.post('/create', createBodyRequest, async (req, res, next) => {
+router.post('/create/unique', createBodyRequest, async (req, res, next) => {
     var Token, decoded, userid;
     if (req.headers.authorization) {
         Token = extractToken(req);
@@ -122,11 +122,9 @@ router.post('/create', createBodyRequest, async (req, res, next) => {
         con.query(`SELECT * FROM vpn WHERE userid = '${userid}' AND username = '${username}'`, (err, rows) => {
             if (err) throw err;
             if (rows.length !== 0) {
-                console.log(`vpn username ${username} telah digunakan!`);
-                res.send({
-                    message: `vpn username ${username} telah digunakan!`,
-                    status: false
-                });
+                res.status(400).send({
+                    message: 'Tidak ditemukan userid yang cocok!'
+                })
             } else {
                 var query;
                   var query1 = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}',' ${vpnType}', '${credentialType}', '${username}', '${md5(password)}', '${userid}')`;
@@ -206,14 +204,12 @@ router.post('/create/one', createBodyRequest, async (req, res, next) => {
         console.log(`Berikut nilai body yang dikirim untuk membuat vpn ${credentialType} : \n`);
         console.table([{ vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, userid }]);
 
-        con.query(`SELECT * FROM vpn WHERE userid = '${userid}' AND username = '${username}'`, (err, rows) => {
+        con.query(`SELECT * FROM vpn WHERE userid = '${userid}'`, (err, rows) => {
             if (err) throw err;
             if (rows.length !== 0) {
-                console.log(`vpn username ${username} telah digunakan!`);
-                res.send({
-                    message: `vpn username ${username} telah digunakan!`,
-                    status: false
-                });
+                res.status(400).send({
+                    message: 'Tidak ditemukan userid yang cocok!'
+                })
             } else {
                 var query = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}',' ${vpnType}', '${credentialType}', '${username}', '${md5(password)}', '${userid}')`;
                 if (vpnType == 1 && credentialType == 'basic') {
@@ -271,14 +267,12 @@ router.post('/create/two', createBodyRequest, async (req, res, next) => {
         console.log(`Berikut nilai body yang dikirim untuk membuat vpn ${credentialType} : \n`);
         console.table([{ vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword, userid }]);
 
-        con.query(`SELECT * FROM vpn WHERE userid = '${userid}' AND username = '${username}'`, (err, rows) => {
+        con.query(`SELECT * FROM vpn WHERE userid = '${userid}'`, (err, rows) => {
             if (err) throw err;
             if (rows.length !== 0) {
-                console.log(`vpn username ${username} telah digunakan!`);
-                res.send({
-                    message: `vpn username ${username} telah digunakan!`,
-                    status: false
-                });
+                res.status(400).send({
+                    message: 'Tidak ditemukan userid yang cocok!'
+                })
             } else {
                    var query = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, username, password, groupName, groupPassword, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}', '${vpnType}', '${credentialType}', '${username}', '${md5(password)}', '${groupName}', '${md5(groupPassword)}', '${userid}')`;
 
@@ -336,14 +330,12 @@ router.post('/create/three', createBodyRequest, async (req, res, next) => {
         console.log(`Berikut nilai body yang dikirim untuk membuat vpn ${credentialType} : \n`);
         console.table([{ vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, userCertificate, serverCertificate }]);
 
-        con.query(`SELECT * FROM vpn WHERE userid = '${userid}' AND username = '${username} AND credentialType = ${credentialType}'`, (err, rows) => {
+        con.query(`SELECT * FROM vpn WHERE userid = '${userid}' AND credentialType = ${credentialType}'`, (err, rows) => {
             if (err) throw err;
             if (rows.length !== 0) {
-                console.log(`vpn username ${username} telah digunakan!`);
-                res.send({
-                    message: `vpn username ${username} telah digunakan!`,
-                    status: false
-                });
+                res.status(400).send({
+                    message: 'Tidak ditemukan userid yang cocok!'
+                })
             } else {
                 var query = `INSERT INTO vpn (vpnName, ipVpnServer, domainVpnServer, vpnType, credentialType, userCertificate, serverCertificate, userid) VALUES ('${vpnName}', '${ipVpnServer}', '${domainVpnServer}', '${vpnType}', '${credentialType}', '${userCertificate}', '${serverCertificate}', '${userid}')`;
 
