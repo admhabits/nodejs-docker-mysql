@@ -32,10 +32,10 @@ const Email = (req, res) => {
                 }
             ],
             "waktuJeda": 5000,
-            "jadwal":"46 16 * * *",
-            "from": "Alam Santiko Wibowo <no-reply@alamhafidz61@gmail.com>",
+            "jadwal":"54 9 * * *",
+            "from": "Alam Santiko Wibowo <hr@admhabits@gmail.com>",
             "subject": "Peringatan Sholat!",
-            "html": "Sudah sholat ashar belum ?"
+            "html": "Sudah sholat duha belum ?"
         }
     };
 
@@ -83,6 +83,7 @@ const Email = (req, res) => {
         const kirimSemuaEmail = () => {
             if (count === list.length || count > list.length) {
                 // console.log('Kirim email selesai!');
+                // clearInterval();
                 return false;
             } else {
                 const email = list[count].email;

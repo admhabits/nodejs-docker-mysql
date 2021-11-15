@@ -1,5 +1,5 @@
 
-module.extractToken = function (req) {
+ const extractToken = (req) => {
 
     this.authorization = req.headers.authorization;
     this.isBearer = req.headers.authorization.split(' ')[0] === 'Bearer';
@@ -12,7 +12,7 @@ module.extractToken = function (req) {
     return null;
 };
 
-module.isBodyEmpty = function (req) {
+const isBodyEmpty = (req) => {
 
     for (var prop in req.body) {
         if (req.body.hasOwnProperty(prop))
@@ -21,3 +21,8 @@ module.isBodyEmpty = function (req) {
     return JSON.stringify(req.body) === JSON.stringify({});
 
 };
+
+module.exports = {
+    extractToken,
+    isBodyEmpty
+}

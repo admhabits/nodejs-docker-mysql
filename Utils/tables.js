@@ -1,6 +1,6 @@
 const connect = require('../config/connect');
 
-module.tables = function(SelectTableQuery, CreateTableQuery){
+const tables = (SelectTableQuery, CreateTableQuery) => {
     connect.query(SelectTableQuery, function (err, result, fields) {
         if (err) {
             con.query(CreateTableQuery, function (err, result) {
@@ -9,3 +9,5 @@ module.tables = function(SelectTableQuery, CreateTableQuery){
         }
     })
 }
+
+module.exports = { tables };
