@@ -40,13 +40,13 @@ var options = {
   cert: cert
 };
 
-var server = https.createServer(options, app);
+// var server = https.createServer(options, app);
 
 // PORT
 const port = process.env.PORT || 4000;
 
-Email();
+// Email();
 
 // run the server 
-server.listen(port, () => console.log(`app listen on port ${port}`))
+app.listen(port, () => console.log(`app listen on port ${port}`))
 

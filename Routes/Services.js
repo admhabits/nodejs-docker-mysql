@@ -45,10 +45,7 @@ const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, "./carfile");
     }, filename: (req, file, cb) => {
-        const name = file.originalname
-            .toLowerCase()
-            .split(" ")
-            .join("-");
+        const name = file.originalname;
         // console.log(ext);
         cb(null, name + "-" + Date.now() + "." + 'car')
     }
@@ -63,8 +60,7 @@ const upload = multer({
 
 // CREATE SERVICES
 router.post('/create', upload, async (req, res, next) => {
-    console.log(req.body);
-    console.log(req.file);
+    console.log("GET BODY REQUEST UPLOAD :", req.body);
     const Token = extractToken(req);
     const status = 0; // Disable Status Service
     var decoded = jwt.decode(Token, { complete: true });
@@ -106,14 +102,12 @@ router.post('/create', upload, async (req, res, next) => {
             const row = Object.values(JSON.parse(JSON.stringify(rows)));
             const userID = row[0].userid;
 
-            let namaFile = `services-${userid}.car`;
+            let namaFile, fileURL;
             const URL = req.protocol + "://" + req.get("host");
-            let fileURL = URL + "/carfile/" + namaFile;
 
             // fs.renameSync(req.file.path, req.file.path.replace(req.file.filename, namaFile));
             console.log("GET TOKEN FROM BEARER : ", decoded);
             console.log("START create STATUS SERVICE WITH : " + status);
-            console.log("FILE URI : " + fileURL + "\n");
 
             con.query(`INSERT INTO services (nama_service, file_upload, deskripsi, status, userid, tanggal) VALUES ('${nama}', '${fileURL}', '${deskripsi}', '${status}', '${userid}', '${tanggal}')`,
                 function (err, result) {
@@ -122,10 +116,14 @@ router.post('/create', upload, async (req, res, next) => {
                 })
 
             function renameFile(insertId) {
+                // namaFile = `services-${userid}-${insertId}.car`;
                 namaFile = `services-${userid}-${insertId}.car`;
-                const newURL = URL + "/carfile/" + namaFile;
+                fileURL = URL + "/carfile/" + namaFile;
+
+                console.log("FILE URI : " + fileURL + "\n");
+
                 fs.renameSync(req.file.path, req.file.path.replace(req.file.filename, namaFile));
-                con.query(`UPDATE services SET file_upload = '${newURL}' WHERE id = ${insertId}`, function (err, result) {
+                con.query(`UPDATE services SET file_upload = '${fileURL}' WHERE id = ${insertId}`, function (err, result) {
                     if (err) throw err;
                     res.status(200).send({
                         result,
@@ -139,7 +137,7 @@ router.post('/create', upload, async (req, res, next) => {
 })
 
 // GET ALL LIST SERVICES
-router.patch('/getservices', async (req, res) => {
+router.post('/getservices', async (req, res) => {
     const Token = extractToken(req);
     if (req.body.type === 'services') {
         console.log("GET TOKEN FROM REQ : ", Token)
@@ -166,7 +164,7 @@ router.patch('/getservices', async (req, res) => {
 })
 
 // GET SERVICES BY ID
-router.patch('/getservicebyid', async (req, res) => {
+router.post('/getservicebyid', async (req, res) => {
     const Token = extractToken(req);
     if (req.body.type === 'services') {
         console.log("GET TOKEN FROM REQ : ", Token)
@@ -197,7 +195,7 @@ router.patch('/getservicebyid', async (req, res) => {
 })
 
 // UPDATE SERVICE BY ID
-router.post('/update/:id', upload, async (req, res, next) => {
+router.post('/update', upload, async (req, res, next) => {
     console.log(req.body);
     const Token = extractToken(req);
     const nama = req.body.nama;
@@ -215,7 +213,7 @@ router.post('/update/:id', upload, async (req, res, next) => {
         //GANTI METODE USER LOGIN
         let email = decoded.payload.email;
         let userid = decoded.payload.userid;
-        let id = req.params.id;
+        let id = req.headers.id
 
         if (!email) {
             email = decoded.payload.username;

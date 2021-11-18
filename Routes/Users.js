@@ -61,9 +61,9 @@ router.post('/login', async (req, res) => {
 // Pendaftaran Users
 router.post('/signup', async (req, res) => {
     console.log(req.body);
-    const email = req.body.signup.email;
-    const pass = md5(req.body.signup.password);
-    const username = req.body.signup.username;
+    const email = req.body.email;
+    const pass = md5(req.body.password);
+    const username = req.body.username;
     const userid = md5(email);
     if (username && email && pass) {
         con.query(`SELECT * FROM users WHERE email = '${email}' AND username = '${username}'`, function (err, result) {
